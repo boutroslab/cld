@@ -1,12 +1,8 @@
 #CRISPR Library Designer (CLD): a software for the multispecies design of sgRNA libraries
 
 ABSTRACT
-Genetic screens using CRISPR/Cas9 are a powerful method for the functional analysis of genomes. Here we describe a fully integrated bioinformatics workflow for the design of custom single guide (sg) RNA libraries for a broad spectrum of organisms, termed CRISPR library designer (CLD). To test its utility, we designed a custom library of 12,471 sgRNAs targeting many genes involved in the TNF-related apoptosis-inducing ligand (TRAIL) pathway. By performing a pooled screen for TRAIL-induced apoptosis in a human colon cancer cell line, we show that CLD can predict a high fraction of functional sgRNAs. An analysis on parameters that determine on-target efficiency of sgRNAs indicates that their power to predict phenotypical changes is limited. We show how simulation experiments can be used to determine the required coverage of sgRNAs per gene for libraries. CLD enables the design of custom scalable, high-coverage sgRNA libraries for many species.
 
-
-
-
-
+Genetic screens using CRISPR/Cas9 are a powerful method for the functional analysis of genomes. Here we provide a fully integrated bioinformatics workflow for the design of custom single guide (sg) RNA libraries for a broad spectrum of organisms, termed CRISPR library designer (CLD). CLD can predict a high fraction of functional sgRNAs. An analysis on parameters that determine on-target efficiency of sgRNAs indicates that their prediction by CLD gives valuable insights into their efficiency in experiment. CLD enables the design of custom scalable, high-coverage sgRNA libraries for many species.
 
 
 cld can be called either with “--version”, printing its version number and copyrights, 
@@ -19,8 +15,7 @@ cld -—task=end_to_end —-output-dir=. --parameter-file=./params.txt --gene-li
 cld can run 2 distinct tasks, database creation and 
 library design.
 
-Database creation 
-	is called using the “--task=make_database” command 
+Database creation is called using the “--task=make_database” command 
 	giving the organism name of interest, as it is denoted in ENSEMBLs ftp folder structure
 	e.g. homo_sapiens, and the rsync url to the current ftp server of ENSEMBL, examples 
  	can be found when cld  --help is called. After calling this function CRISPR will 
@@ -29,8 +24,7 @@ Database creation
  	reformatted sequence files. If not enough computing power is available to the user, 
  	these databases also might be downloaded from http://www.dkfz.de/signaling/crispr-downloads/. 
 
-Library design
-	can either be done in two steps: “cld 
+Library design can either be done in two steps: “cld 
 	 --task=target_ident” and then “cld  --task=library_assembly” if the user wants 
  	to separate the two steps for example in order to only identify target sites without 
  	compiling a clonable library. 
@@ -45,7 +39,9 @@ Library design
 For running cld from the command line the following syntax must be used.
 
 Usage: cld  --task=end_to_end [options=value] ...
+
 Options:
+
 	    --task=<task option>
 		 make_database 				to provide an cld ready data base.
 		    --organism=<string>		Specify an organism to build the database for.
