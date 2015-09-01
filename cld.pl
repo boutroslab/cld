@@ -3001,6 +3001,10 @@ sub predict_cpg_islands{
         
         
         my $seqlength=length $sequence;
+		if (!defined($seqlength)) {
+			$seqlength=0;
+		}
+		
         my $CpGno=1;
         my $CpGstart=0;														#CpGstart+1 is equal to the 
                                                                                                                                                 #start position of sequences.
