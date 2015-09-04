@@ -1,6 +1,6 @@
 #!/usr/bin/perl
 use strict;
-use warnings FATAL => 'all';
+#use warnings FATAL => 'all';
 use Bio::DB::Fasta;
 use Bio::SeqIO;
 use Bio::Tools::GFF;
@@ -26,11 +26,15 @@ use Parallel::ForkManager; #important package to enable mutlithreading of the sc
 use Cwd;
 use IPC::Cmd qw[can_run run];
 use Getopt::Long qw(:config pass_through);	
- use File::Grep qw( fgrep fmap fdo );
- 
+use File::Grep qw( fgrep fmap fdo );
+use Text::Wrap;
+use Unix::Processors;
+my $procs = new Unix::Processors;
+my $max_parallel= my $parallel_number =$procs->max_online;
+  
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','0.1.7','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','0.1.8','2015-09-01','2013-2015');
 
 
 
@@ -798,8 +802,12 @@ sub filter_library{
 		my $cline = $_;
                 @line=split("\t",$cline);
                 @info=split(";\ ",$line[8]);
-                $cline=~m/id=(.+?)_/;
-                $gene=$1;
+				foreach my $key (keys(%genes_from_list)){
+					if ($cline=~/$key/) {
+						$gene=$key;
+					}
+					
+				}
                 my $id="";
                 foreach my $number (0..5) {
                     $info[$number]=~m/(.+?)=(.*)/;
@@ -1368,7 +1376,7 @@ sub make_a_crispr_library{
                              $parallel_number=2;
                         }
                   }else{
-                        $parallel_number=8;
+                        $parallel_number=$max_parallel;
                   }
             }else{
                   $parallel_number=2;
@@ -2699,66 +2707,152 @@ sub find_and_print_CRISPRS {
 sub make_database{
         if (can_run('wget') && (can_run('bowtie-build') || can_run('bowtie2-build'))) {                
 	    print $_[0]."\n"; #read organism from command-line
-	    mkdir $_[0];
+	    if(!(-d $_[0])){
+			mkdir $_[0];
+		}
 	    chdir $_[0];		
 		system('rsync '.$_[1].'fasta/'.$_[0].'/dna/ > temp.log;');
 		# Void context
 		if ( fgrep { /README/ } "temp.log" ) {
 			print "rsync could connect\nand your files are downloaded";
 		}else{
-			print "there was some problem with the rsync connection to ensembl.\nMaybe you have a typo in the server address or some proxy is hindering the access.\n"
+			die "\n\nThere was some problem with the rsync connection to ensembl.\nMaybe you have a typo in the server address or some proxy is hindering the access.\n"
 		}
-
+		unlink('temp.log');
 	    system('
-	    rsync -av '.$_[1].'genbank/'.$_[0].'/ .;
-	    rsync -av '.$_[1].'gtf/'.$_[0].'/ .;
-	    rsync -av --exclude "*abinitio*" '.$_[1].'fasta/'.$_[0].'/cdna/ .;
-	    rsync -av --exclude "*dna_rm*" --exclude "*dna.chromosome*" --exclude "*dna_sm*" '.$_[1].'fasta/'.$_[0].'/dna/ .;
-	    ');
+			rsync -av --progress '.$_[1].'gtf/'.$_[0].'/ .;
+			rsync -av --progress --exclude "*abinitio*" '.$_[1].'fasta/'.$_[0].'/cdna/ .;
+			rsync -av --progress --exclude "*primary_assembly*" --exclude "*dna_rm*" --exclude "*dna.chromosome*" --exclude "*dna_sm*" '.$_[1].'fasta/'.$_[0].'/dna/ .;
+		');
 	    print "All files were dowloaded\n";
 			system('for f in *.gz ; do gunzip $f; done ;');
-			system('for f in *.dat ; do cat  $f >> '.$_[0].'.all.gb; done ;');
-			if (-z $_[0].'.all.gb') {
-				die 'The download was not successfull please check with the Readme or contact us at crispr@dkfz.de for solution'."\n";
-			}			
-			system('for f in *.dat ; do rm $f ;done ;');
 			system('for f in *.gtf ; do cat $f > '.$_[0].'.new.gta ; done ;');
 			system('for f in *.cdna.all.fa  ; do cat $f > '.$_[0].'.cdna.all.new.fu ; done ;');	    
 			system('for f in *.dna.toplevel.fa ; do cat $f > '.$_[0].'.dna.toplevel.new.fu ; done ;');
 			system('for f in *.gtf ; do rm $f;  done ;');
 			system('for f in *.cdna.all.fa ; do rm $f;  done ;');
 			system('for f in *.dna.toplevel.fa ; do rm $f ; done ;');
-			system('for f in *new.gta ; do cat $f > '.$_[0].'.gtf ; done ;');
+			system('for f in *.new.gta ; do cat $f > '.$_[0].'.gtf ; done ;');
 			system('for f in *.cdna.all.new.fu ; do cat $f > '.$_[0].'.cdna.all.fa ; done ;');
 			system('for f in *.dna.toplevel.new.fu; do cat $f > '.$_[0].'.dna.toplevel.fa ; done ;');
 			system('for f in *.gta ; do rm $f ; done ;');
 			system('for f in *.cdna.all.new.fu ; do rm $f ; done ;');
 			system('for f in *.dna.toplevel.new.fu ; do rm $f ; done ;');
-	    print "All files were unzipped\n";
-	    convert_to_gff($_[0].".all.gb"); #produce gff- and fasta-files with gene data
-	    print "All files were converted to gff\n";
-	    system('for f in *.fasta ; do cat $f >> '.$_[0].'.all.dna.fa ; done ;'); #add all fasta-files to [organsim].all.dna.fa
-	    cpg_for_all("."); #store CpG-island information in csv-files
-	   system('for f in *.fasta ; do rm $f ;done ;');
-	   ## print "The entrire genome was checked for CPG islands\n";
-	   correct_cdna($_[0].".cdna.all.fa"); #change header of [organsim].cdna.all.fa in [organsim].cdna.all.facorrected.fa
-	    system('for f in *.cdna.all.fa ; do rm $f ;done ;');
-	   #print "CDNA files were corrected\n";
-	   system("mv ".$_[0].".cdna.all.facorrected.fa ".$_[0].".cdna.all.fa;"); #rename [organsim].cdna.all.facorrected.fa
-	   build_tree_new($_[0]); #produce mygff-files with feature information
-	    system('for f in *.gff ; do rm $f ;done ;');
-	   # print "Annotation were formatted\n";
-	   include_cpg("."); #add CpG-island information to mygff-files
-	  system('for f in *.csv ; do rm $f ;done ;');
-	   system('for f in *.gtf ; do rm $f ;done ;');
-	    #print "All prerequisites for building alignment indeces were built correctly.\nNow Bowtie indeces will be build, depending on the size of the target genome, this can take a while.\n";
-	    if(can_run('bowtie2-build')){system("bowtie2-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie2-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie2-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;");} #create files with bowtie2-indices
-	    if(can_run('bowtie-build')){system("bowtie-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;"); }#create files with bowtie-indices
-	    print "The database for the organism ".$_[0]." has been built in the following path:\n";
-	    system('pwd');
-        }else{
+			print "All files were unzipped\n";			
+			create_mygff($_[0].'.dna.toplevel.fa',$_[0].'.gtf',$_[0].'.all.dna.fa');
+			print "All files were converted to gff\n";
+			wrap_sequences($_[0].'.cdna.all.fa');
+			cpg_for_all($_[0].'.dna.toplevel.fa'); #store CpG-island information in csv-files
+			system('for f in *.fasta ; do rm $f ;done ;');
+			print "The entire genome was checked for CPG islands\n";
+			system('rm *all*.fasta;');
+			system('rm *.flat;');
+			system('rm *.gdx');
+			system('rm \#*');
+			system('rm *README*');
+			system('rm *CHECKSUMS*');
+			correct_cdna($_[0].".cdna.all.fa"); #change header of [organsim].cdna.all.fa in [organsim].cdna.all.facorrected.fa
+			system('for f in *.cdna.all.fa ; do rm $f ;done ;');
+			print "CDNA files were corrected\n";
+			system("mv ".$_[0].".cdna.all.facorrected.fa ".$_[0].".cdna.all.fa;"); #rename [organsim].cdna.all.facorrected.fa
+			system('for f in *.gff ; do rm $f ;done ;');
+			 print "Annotation were formatted\n";
+			include_cpg("."); #add CpG-island information to mygff-files
+			system('for f in *.csv ; do rm $f ;done ;');
+			system('for f in *.gtf ; do rm $f ;done ;');
+			print "All prerequisites for building alignment indeces were built correctly.\nNow Bowtie indeces will be build, depending on the size of the target genome, this can take a while.\n";
+			if(can_run('bowtie2-build')){system("bowtie2-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie2-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie2-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;");} #create files with bowtie2-indices
+			if(can_run('bowtie-build')){system("bowtie-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;"); }#create files with bowtie-indices
+			opendir my $curr_dir , ".";
+			while (readdir($curr_dir)) {
+				if (-z $_) {
+					unlink($_);
+				}				
+			}
+			closedir($curr_dir);			
+			print "The database for the organism ".$_[0]." has been built in the following path:\n";
+			system('pwd');
+			}else{
                 print "wget and bowtie or bowtie2 need to be installed and executable from the \$PATH variable.\n You can test this by running \"which wget\" and \"which bowtie\" from your terminal."
-        }
+			}
+}
+sub create_mygff{
+	print "creating Fasta Database....";
+      my $db       = Bio::DB::Fasta->new($_[0]);
+	  print "done\n";
+      my @line;
+      my $seqstr  ;
+	  $Text::Wrap::columns = 61;
+      my $chom;
+      my $locus_tag;
+      my $note;
+      my $id;
+      my $chrom_file_fasta;
+      my $chrom_file_gff;
+      my $temp;
+	  my $curr_chrom;
+      open(my $in_gtf,"<", $_[1]) or die $!;
+      open($chrom_file_fasta, ">",$_[2]) or die $!;
+      while (<$in_gtf>) {
+       if($_!~/^\#/){
+         @line=split("\t",$_);
+         if ($line[0] ne $curr_chrom) {    
+           if(defined $chrom_file_gff ){close($chrom_file_gff) };   
+           open($chrom_file_gff, ">", $line[0]."_indexed.mygff") or die $!;
+         }
+         $curr_chrom=$line[0];
+         if ($line[2]=~/gene/) {
+           if (($line[3]-500)>0) {
+             $temp=$line[3]-500;
+           }    
+           $seqstr   = wrap('', '', $db->seq($line[0], ($temp) => ($line[4]+500)));
+           $line[8]=~m/gene_id \"(.+?)\"/;
+           $id=$1;
+           $line[8]=~m/gene_name \"(.+?)\"/;
+           $locus_tag=$1;
+           $line[8]=~m/gene_biotype \"(.+?)\"/;
+           $note=$1;
+           print $chrom_file_fasta ">$id locus_tag= $locus_tag;note= $note;chrom:".$line[0].":".$line[3]."..".$line[4]."\n$seqstr\n";
+           print $chrom_file_gff "gene_".$id."::".$locus_tag."\t".$line[3]."\t".$line[4]."\n";
+         }elsif($line[2]=~m/exon/){ #if feature is a start_codon, stop_codon, CDS or exon
+           if($line[8]=~m/gene_id \"(.+?)\".*?transcript_id \"(\S+)\"\;.+?exon_number \"(\S+)\"\;/){ #store transcriptID and exonnumber
+              print $chrom_file_gff $line[2]."::".$2."::".$3."::".$1."\t".$line[3]."\t".$line[4]."\n"; #print "feature::transcriptID::exonnumber\t[start]\t[end]
+              if ($3==1) {
+               if ($line[6] eq "+") {
+                 print $chrom_file_gff "TSS::".$2."::".$3."::".$1."\t".$line[3]."\t".$line[3]."\n"; #print "feature::transcriptID::exonnumber\t[start]\t[end]
+               }else{
+                 print $chrom_file_gff "TSS::".$2."::".$3."::".$1."\t".$line[4]."\t".$line[4]."\n"; #print "feature::transcriptID::exonnumber\t[start]\t[end]
+               }       
+              }       
+           }
+         }elsif($line[2]!~m/transcript/){
+           if($line[8]=~m/gene_id \"(.+?)\".*?transcript_id \"(\S+)\"\;.+?exon_number \"(\S+)\"\;/){ #store transcriptID and exonnumber
+             print $chrom_file_gff $line[2]."::".$2."::".$3."::".$1."\t".$line[3]."\t".$line[4]."\n"; #print "feature::transcriptID::exonnumber\t[start]\t[end]
+           }
+         }
+       }  
+      }
+      close($in_gtf);
+      close($chrom_file_fasta);
+	  if(defined $chrom_file_gff ){close($chrom_file_gff) };   
+}
+
+sub wrap_sequences{
+	$Text::Wrap::columns = 61;
+	my $db_file_name=$_[0];
+	
+	open my ($file_to_wrap),$db_file_name ;
+	open my $out_file , ">temp" ;
+	while (<$file_to_wrap>) {
+		if ($_!~m/>/){
+			print $out_file wrap('', '', $_);
+		}else{
+			print $out_file $_;
+		}    
+	}
+	close $file_to_wrap;
+	close $out_file;
+	rename("temp",$db_file_name);
 }
 
 sub build_tree_new{
@@ -2841,25 +2935,27 @@ sub correct_cdna{
         close OUTFILE;
 }
 sub cpg_for_all{
-        my $pm = Parallel::ForkManager->new(8);
-        opendir INDIR, $_[0];
-        
-        foreach my $file (readdir(INDIR)){
-            if($file=~m/\.fasta/){
-                my $pid = $pm->start and next;
-                 predict_cpg_islands($file); #prints CpG-islands to csv-file
-                $pm->finish; 
-            }
+        my $pm = Parallel::ForkManager->new($max_parallel);
+        my $db       = Bio::DB::Fasta->new($_[0]);
+		my @ids      = $db->get_all_primary_ids;
+        foreach my $id (@ids){
+                my $pid = $pm->start and next;				
+					my $seq=$db->seq($id);
+					open(my $temp, ">", $id.".fasta") or die $!;
+					print $temp $seq;
+					close($temp);
+					predict_cpg_islands($id.".fasta"); #prints CpG-islands to csv-file
+                $pm->finish;             
         }
         $pm->wait_all_children;
-        closedir INDIR;
 }
 
 sub include_cpg{
         opendir INDIR, $_[0];
         foreach my $file (readdir(INDIR)){
             if ($file=~m/(.*)\.csv/) { #for every csv-file
-                open OUTFILE, ">>".$1."_indexed.mygff";
+				if (-e $1."_indexed.mygff") {
+					open OUTFILE, ">>".$1."_indexed.mygff";
                 open INFILE, $file;
                 while(my $line = <INFILE>){
                     my @line=split(",",$line); #split the line after commas
@@ -2867,6 +2963,11 @@ sub include_cpg{
                 }
                 close INFILE;
                 close OUTFILE; 
+			}else{
+				unlink($file);
+			}
+				
+                
             }
         }
         closedir INDIR;
@@ -2876,11 +2977,15 @@ sub convert_to_gff{
         my ($seqfile) = $_[0];
         die("must define a valid seqfile to read") unless ( defined $seqfile && -r $seqfile);
         
-        my $pm = Parallel::ForkManager->new(8);
+        my $pm = Parallel::ForkManager->new($max_parallel);
         my $seqio = new Bio::SeqIO(-format => 'genbank', -file => $seqfile);
         while( my $seq = $seqio->next_seq ) { #for every sequence
+			my $fname = $seq->display_id; #store seqname
+			if ($fname=~/\#/) {
+				next;
+			}	
             my $pid = $pm->start and next;
-            my $fname = $seq->display_id; #store seqname
+            		
                 open SEQOUT, ">$fname.fasta";
                 open GFFOUT, ">$fname.gff";
                     foreach my $feature ( $seq->top_SeqFeatures() ) {		
@@ -2899,7 +3004,7 @@ sub convert_to_gff{
                                 print GFFOUT "$fname\tENSEMBL\tgene\t".$feature->start()."\t".$feature->end()."\t.\t+\t.\t$name\n"; #print genes with attributes to gff-file
                                 $name.="chrom:$chrom";	
                                 my $currseq=substr($seq->seq(),$feature->start(),($feature->end()-$feature->start()));
-                                $currseq=~s/(\w{5000})/$1\n/g;
+                                #$currseq=~s/(\w{5000})/$1\n/g;
                                 chomp $currseq;
                                 print SEQOUT ">$name\n".$currseq."\n";	#print sequence to fasta-file				
                         }
@@ -3146,20 +3251,20 @@ sub predict_cpg_islands{
                         }
                 }
         
-        print "Selected lower limits: \%GC=$_[1], ObsCpG/ExpCpG=$_[2], Length=$_[3]\n";
+        #print "Selected lower limits: \%GC=$_[1], ObsCpG/ExpCpG=$_[2], Length=$_[3]\n";
         my $contigname=substr $exportfile, 0, 8;
         open(OUT,">$exportfile") || die "$exportfile: $!";
         my $q=1;
                 for (my $m=1;$m<=$j;$m++){
                                 if ($cpginf[$m-1]->[4]>=$criteria_length){
                                         print OUT "CpG island "."$q,$cpginf[$m-1]->[0],$cpginf[$m-1]->[1],$cpginf[$m-1]->[2],$cpginf[$m-1]->[3],$cpginf[$m-1]->[4]\n";
-                                        print "$contigname, CpG island $q, start=$cpginf[$m-1]->[0], end=$cpginf[$m-1]->[1], \%GC=$cpginf[$m-1]->[2], ObsCpG/ExpCpG=$cpginf[$m-1]->[3], Length=$cpginf[$m-1]->[4]\n";
+                                        #print "$contigname, CpG island $q, start=$cpginf[$m-1]->[0], end=$cpginf[$m-1]->[1], \%GC=$cpginf[$m-1]->[2], ObsCpG/ExpCpG=$cpginf[$m-1]->[3], Length=$cpginf[$m-1]->[4]\n";
         #				print "$contigname, CpG island $q, $cpginf[$m-1]->[0], $cpginf[$m-1]->[1], $cpginf[$m-1]->[2], $cpginf[$m-1]->[3], $cpginf[$m-1]->[4]\n";
                                         $q++;
                                 }
                 }
         if ($q==1){
-                print "No CpG islands was found.\n";
+                #print "No CpG islands was found.\n";
         }
         
         close(OUT);
@@ -3182,7 +3287,9 @@ sub predict_cpg_islands{
         }
         
         }
+		unlink($filename)
 }
+
 
 sub mock{};
 =cut
