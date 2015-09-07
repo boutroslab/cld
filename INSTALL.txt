@@ -11,6 +11,7 @@ unzip cld_*.zip
 
 sudo cp cld_*/cld /usr/bin/
 
+Added the custom interval tree Package for fast build and access to rebuild interval trees. Install it via "perl Makefile.PL"; "make" ; "sudo make install" from Set-intervalTree. All other dependencies of CLD are available online at CPAN.
 
 After successful installation, calling cld directly from the command line can start 
 cld, only requirement are rights to read and write from the input and 

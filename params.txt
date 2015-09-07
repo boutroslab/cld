@@ -44,3 +44,7 @@ ignore_missing_id=false
 kind=single
 exclude_overlapping_genes=false
 ignore_intergenic=false
+crispra_upstream=400
+crispra_downstream=50
+crispri_upstream=300
+crispri_downstream=50

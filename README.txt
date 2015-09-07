@@ -116,6 +116,8 @@ Options:
 								   				 may be "true" or "false" default :true.	    
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
 								    			this folder must be prepared by --task= target_ident
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-can be : true or false (default:true)
 
 		 end_to_end 							to perform and end_to_end analysis from target identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -129,6 +131,8 @@ Options:
 		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
 								    			default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
+		    --spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-can be : true or false (default:true)
 
 	    --version							- Show version.
 	    --help								- Show this message.

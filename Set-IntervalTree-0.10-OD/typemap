@@ -1,0 +1,20 @@
+TYPEMAP
+
+PerlIntervalTree * O_OBJECT
+PerlIntervalTree_Node * PERLINTERVALTREE_NODE
+
+OUTPUT
+
+PERLINTERVALTREE_NODE
+	sv_setref_pv( $arg, \"Set::IntervalTree::Node\", (void*)$var );
+
+INPUT
+
+PERLINTERVALTREE_NODE
+	if( sv_isobject($arg) && (SvTYPE(SvRV($arg)) == SVt_PVMG) )
+		$var = ($type)SvIV((SV*)SvRV( $arg ));
+	else{
+		warn( \"${Package}::$func_name() -- $var is not a blessed SV reference\" );
+		XSRETURN_UNDEF;
+	}
+

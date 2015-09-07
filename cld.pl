@@ -29,12 +29,13 @@ use Getopt::Long qw(:config pass_through);
 use File::Grep qw( fgrep fmap fdo );
 use Text::Wrap;
 use Unix::Processors;
+
 my $procs = new Unix::Processors;
 my $max_parallel= my $parallel_number =$procs->max_online;
   
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','0.1.8','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','0.1.7','2015-09-01','2013-2015');
 
 
 
@@ -53,7 +54,8 @@ my (
     $opt_organism,
     $opt_rsync_link,
     $ver,
-    $help
+    $help,
+	$cover_many_transcripts
     );
 GetOptions(
 	    'task=s'		=> \$opt_task,
@@ -70,7 +72,8 @@ GetOptions(
 	    'organism=s'	=> \$opt_organism,
 	    'rsync-link=s'	=> \$opt_rsync_link,
 	    'version'		=> \$ver,
-	    'help'		=> \$help
+	    'help'		=> \$help,
+		'spread-over-transcripts=s'=> \$cover_many_transcripts
 	);
 my $ver_str = "$script_name, version $script_version, $script_date\nAuthor $script_years Florian Heigwer\n";
 my $help_str = qq{Usage: cld --task=end_to_end [options=value] ...
@@ -107,6 +110,8 @@ Options:
 								   				 may be "true" or "false" default :true.	    
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
 								    			this folder must be prepared by --task= target_ident
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-an be : true or false (default:true)
 
 		 end_to_end 							to perform and end-to-end analysis from target identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -120,6 +125,8 @@ Options:
 		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
 								    			default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-can be : true or false (default:true)
 
 	    --version							- Show version.
 	    --help								- Show this message.
@@ -151,6 +158,7 @@ for (my $i=0; $i<scalar(@ARGV); $i++)
 	if ($ARGV[$i] eq '-organism'		){$opt_organism		= int($ARGV[++$i]); }
 	if ($ARGV[$i] eq '-rsync-link'		){$opt_rsync_link	= int($ARGV[++$i]); }
 	if ($ARGV[$i] eq '-input-folder'	){$opt_input_folder		= int($ARGV[++$i]); }
+	if ($ARGV[$i] eq '-spread-over-transcripts'	){$cover_many_transcripts		= int($ARGV[++$i]); }
     }
 }
 
@@ -207,7 +215,8 @@ if($opt_task eq "make_database"){
 		    defined($opt_3_adapt) ? $opt_3_adapt : "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG",
 		    defined($correct_5_prime_G) ? $correct_5_prime_G : "true", 
 		    $opt_working_directory,
-			$opt_gene_list
+			$opt_gene_list,
+			defined($cover_many_transcripts) ? $cover_many_transcripts : "true"
 		);
 }elsif($opt_task eq "library_assembly"){
 	if(!defined($opt_gene_list)){
@@ -233,7 +242,8 @@ if($opt_task eq "make_database"){
 		    defined($opt_3_adapt) ? $opt_3_adapt : "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG",
 		    defined($correct_5_prime_G) ? $correct_5_prime_G : "true", 
 		    $opt_working_directory,
-			$opt_gene_list
+			$opt_gene_list,
+			defined($cover_many_transcripts) ? $cover_many_transcripts : "true"
 		   );
 }else{
 	die "Some parameters are missing!\nOne of the four options make_database , target_ident , end_to_end or library assembly must be set.\n";
@@ -278,13 +288,14 @@ sub calculate_CRISPR_score {
       if ( exists $_[0]->{$_[4]} ) { # check wethere the tree exists
             #search for annotations in the intervall from start (2) to end (3) and count them in score
             my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );
-            
+           
             foreach  my $anno ( @{$annotations} ) {
+				
                   if ( $anno =~ m/gene_(\S+)_([0-9]+)_([0-9]+)/ ) {
                        my $gene_annotations = $_[0]->{$_[4]}->fetch( int($2), int($3) );                        
                         foreach  my $gene_anno ( @{$gene_annotations} ) {
-                              if ($gene_anno=~m/exon::(\S+)::(\d+)_(\d+)_(\d+)/) {    
-                                    ${$transcripts{$1}}{"exon".$2}=$3."_".$4;
+                              if ($gene_anno=~m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {    
+                                    ${$transcripts{$1}}{"exon".$2}=$4."_".$5;
                               }
                         }
                         last;
@@ -294,8 +305,9 @@ sub calculate_CRISPR_score {
                   if ( $anno =~ m/gene_(\S+)_[0-9]+_[0-9]+/ ) {
                         $new_score[1]++;
                         ${ $score{"gene"} }{$1}++;                      
-                  } elsif ( $anno =~ m/exon::(\S+)::(\d+)\_(\d+)_(\d+)/) {
+                  } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
+						${ $score{"gene_to_exon"} }{$3}++;
 			$new_score[1]=$new_score[1]+5/$2;
                         if (exists $score{"transcripts"}) {
                               $score{"transcripts"}=$score{"transcripts"}."_".$1;
@@ -307,7 +319,7 @@ sub calculate_CRISPR_score {
                   } elsif ( $anno =~ m/CpG/ ) {
                         $score{"CpG"}++;
 			$new_score[1]--;
-                  } elsif ( $anno =~ m/CDS::(\S+)::($expression)\_/ ) {
+                  } elsif ( $anno =~ m/CDS::(\S+)::($expression)::(\S+)\_(\d+)_(\d+)$/ ) {
                         $new_score[1]=$new_score[1]+5/$2;
 		       if($_[1]->{"specific_transcript"} ne "any"){
 			   if ($1 eq $_[1]->{"specific_transcript"}) {
@@ -319,8 +331,9 @@ sub calculate_CRISPR_score {
                         if ($_[5] == 1) { # only for FORWARD needed @Flo ist das so gewollt?
                               $score{"CDS"}++;
                         }
-                  } elsif ( $anno =~ m/CDS/ ) {
+                  } elsif ( $anno =~ m/CDS::(\S+)::(\d)::(\S+)\_(\d+)_(\d+)$/ ) {
                         $score{"CDS"}++;
+						${ $score{"gene_to_CDS"}}{$3}++;
                         $new_score[1]++;
                   }
             }
@@ -343,32 +356,33 @@ sub calculate_CRISPR_score {
 										   }
 					};
                   
-                                 
+                                 #print $_[1]->{"crispri_upstream"}."\t".$_[1]->{"crispri_downstream"}."\n";
                   if (
                         $strand==1
-                        && ($first_start+300)>=int($_[2])
-                        && ($first_start-50)<=int($_[2])
+                        && ($first_start+$_[1]->{"crispri_upstream"})>=int($_[2])
+                        && ($first_start-$_[1]->{"crispri_downstream"})<=int($_[2])
                         ) {
                           $score{"CRISPRi"}=1;
                      }elsif(
                            $strand==0
-                         && ($first_end-300)<=int($_[2])
-                         && ($first_end+50)>=int($_[2])
+                         && ($first_end-$_[1]->{"crispri_upstream"})<=int($_[2])
+                         && ($first_end+$_[1]->{"crispri_downstream"})>=int($_[2])
                      ){
                            $score{"CRISPRi"}=1;
                      }elsif(
                            $strand==1
-                         && ($first_start-400)<=int($_[2])
-                         && ($first_start-50)>=int($_[2])
+                         && ($first_start-$_[1]->{"crispra_upstream"})<=int($_[2])
+                         && ($first_start-$_[1]->{"crispra_downstream"})>=int($_[2])
                      ){
                            $score{"CRISPRa"}=1;
                      }elsif(
                            $strand==0
-                         && ($first_end+400)>=int($_[2])
-                         && ($first_end+50)<=int($_[2])
+                         && ($first_end+$_[1]->{"crispra_upstream"})>=int($_[2])
+                         && ($first_end+$_[1]->{"crispra_downstream"})<=int($_[2])
                      ){
                            $score{"CRISPRa"}=1;
                      }
+				 # print  $first_start."\t".int($_[2])."\t".$score{"CRISPRi"}."\n";
             }
             
             #search for the start and stop coddon in the intervall from start (2) to end (3) with an up/downstream window
@@ -381,8 +395,7 @@ sub calculate_CRISPR_score {
                         $score{"stop_codon"}++;
                         $new_score[1]++;
                   }
-            }                        
-            
+            }            
       }
       $score{"new_score"}=\@new_score;
       return %score;
@@ -783,28 +796,33 @@ sub filter_library{
     my $three_prime_extension=$_[5];
     my $correct_five_prime=$_[6];
 	my $gene_list_file=$_[8];
+	my $many_transcripts=$_[9];
     my @info=();
     my @line=();
     my %designs=();
     my %genes=();
 	my %genes_from_list=();
+	
+	my %id_for_lib;
     my $gene="";
     my $version=2;
 	open (my $gene_list, "<", $gene_list_file) or die $!;
 		while(<$gene_list>){
+			chomp $_;
 			$genes_from_list{$_}++;
 		}
 	close $gene_list;
-		
+	my %genes_avail;
     open (my $libgff, "<", $temp_dir . "/all_results_together.gff") or die $!;
        while(<$libgff>){
             if(!($_=~/\#/)){
-		my $cline = $_;
+				my $cline = $_;
                 @line=split("\t",$cline);
                 @info=split(";\ ",$line[8]);
 				foreach my $key (keys(%genes_from_list)){
 					if ($cline=~/$key/) {
 						$gene=$key;
+						$genes_avail{$gene}++;
 					}
 					
 				}
@@ -825,67 +843,106 @@ sub filter_library{
     my $last_gene="";
     my @new_file=(); 
     my %ids=();
+	my @ids=();
     my %count=();
     my %missing=();
+	my %all_ids;
     my $general_coverage=0;
-    foreach my $key (keys %designs){
-        $ids{${$designs{$key}}{"gene"}}=0;
-    }
-    foreach my $element (
-			 sort { $designs{$b}->{"gene"} cmp $designs{$a}->{"gene"}}
-			 sort{ $designs{$b}->{"anno_score"} <=> $designs{$a}->{"anno_score"} }
-			 sort{ $designs{$b}->{"spec_score"} <=> $designs{$a}->{"spec_score"} }
-			 sort{ $designs{$b}->{"eff_score"} <=> $designs{$a}->{"eff_score"} }
-			 keys %designs
-			 ){
-	if( $ids{${$designs{$element}}{"gene"}}<($coverage) &&
-            !(${$designs{$element}}{"seq"}=~m/GAAGAC/) &&
-			!(${$designs{$element}}{"seq"}=~m/GTCTTC/) &&
-            !(${$designs{$element}}{"seq"}=~m/GAATTC/) &&
-            !(${$designs{$element}}{"seq"}=~m/CTTAAG/) &&
-            !(${$designs{$element}}{"seq"}=~m/CAATTG/) &&
-            !(${$designs{$element}}{"seq"}=~m/GTTAAC/) &&
-            !(${$designs{$element}}{"seq"}=~m/CTCGAG/) &&
-            !(${$designs{$element}}{"seq"}=~m/GAGCTC/) 
-        ){
-            $ids{${$designs{$element}}{"gene"}}++;
-        }else{
-	    $missing{${$designs{$element}}{"gene"}}++;
-	    delete $designs{$element};  
+	my %id_for_lib;
+	my %id_with_info;
+	open (my $libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
+	while(<$libtab>){		
+        @line=split("\t",$_);
+		my @transcripts=split("_",$line[7]);
+		foreach my $trans (@transcripts){
+			${${$ids{$line[6]}}{$trans}}{$line[0]}++;
+		}
+		${${$id_with_info{$line[6]}}{$line[0]}}{"anno_score"}=$line[16];
+		${${$id_with_info{$line[6]}}{$line[0]}}{"spec_score"}=$line[15];
+		${${$id_with_info{$line[6]}}{$line[0]}}{"eff_score"}=$line[17];
+		${${$id_with_info{$line[6]}}{$line[0]}}{"seq"}=$line[5];
 	}
-    }
-    foreach my $key (keys %designs){
-        if (${$designs{$key}}{"gene"}) {
-            if ($ids{${$designs{$key}}{"gene"}} < $coverage) {
-                $missing{${$designs{$key}}{"gene"}}++;
-                delete $designs{$key};                
-            }
-        }        
-    }
-    foreach my $element (
-			 sort { $designs{$b}->{"gene"} cmp $designs{$a}->{"gene"}}
-			 sort{ $designs{$b}->{"anno_score"} <=> $designs{$a}->{"anno_score"} }
-			 sort{ $designs{$b}->{"spec_score"} <=> $designs{$a}->{"spec_score"} }
-			 sort{ $designs{$b}->{"eff_score"} <=> $designs{$a}->{"eff_score"} }
-			 keys %designs
-			 ){
-            if($general_coverage<$limit){
-                $general_coverage++;
-                $count{${$designs{$element}}{"gene"}}++;
-            }else{
-		$missing{${$designs{$element}}{"gene"}}++;
-                delete $designs{$element};
-            }
-    }
+	close $libtab;
+	my %isgone;
+	foreach my $key (keys %ids){
+			my %total=();
+				foreach my $subkey (keys %{$ids{$key}}){
+					foreach my $subsubkey (keys %{${$ids{$key}}{$subkey}}){
+						$total{$subsubkey}++
+					}
+				}
+				if ((scalar (keys %total)) < $coverage) {
+					delete $ids{$key};
+					$isgone{$key}=(scalar (keys %total));
+				}
+				
+		}
+	if ($many_transcripts eq "true") {
+		my $temp="";		
+		foreach my $key (keys %ids){
+			while ((scalar (keys %{$id_for_lib{$key}})) < $coverage) {
+					foreach my $subkey (
+					sort {scalar keys %{${$ids{$key}}{$b}} <=> scalar keys %{${$ids{$key}}{$a}} } keys %{$ids{$key}}
+					){					
+					if (defined((keys(%{${$ids{$key}}{$subkey}}))[0]) && ((scalar (keys %{$id_for_lib{$key}})) < $coverage)) {
+						$temp= (keys(%{${$ids{$key}}{$subkey}}))[0];
+						delete ${${$ids{$key}}{$subkey}}{$temp};
+						${$id_for_lib{$key}}{$temp}++;
+					}	
+				}
+			}			
+		}
+	}else{
+		
+		foreach my $key (keys %ids){
+			while ($count{$key} < $coverage) {
+				foreach my $element (
+					sort { ${$id_with_info{$key}}{$b}->{"anno_score"} <=> ${$id_with_info{$key}}{$a}->{"anno_score"} }
+					sort { ${$id_with_info{$key}}{$b}->{"spec_score"} <=> ${$id_with_info{$key}}{$a}->{"spec_score"} }
+					sort { ${$id_with_info{$key}}{$b}->{"eff_score"} <=> ${$id_with_info{$key}}{$a}->{"eff_score"} }
+					keys %{$id_with_info{$key}}
+					){
+					if( 		$count{$key} < $coverage &&
+									!(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAAGAC/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GTCTTC/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAATTC/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CTTAAG/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CAATTG/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GTTAAC/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CTCGAG/) &&
+								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAGCTC/) 
+						){
+							$count{$key}++;
+							${$id_for_lib{$key}}{$element}++;
+					}else{
+						delete ${$id_with_info{$key}}{$element};
+					}
+			   }
+			}
+		}
+	}
+	
+	foreach my $key (keys %id_for_lib){		
+		if ($general_coverage>$limit) {
+			delete $id_for_lib{$key};
+		}else{
+			$general_coverage+=scalar keys %{$id_for_lib{$key}}
+		}		
+	}
+	
+	#foreach my $key (keys %id_for_lib){
+	#	print $key."\t".join("||",keys %{$id_for_lib{$key}})."\n";
+	#}
 
-    $lib_name=$lib_name.".$version."."$coverage.".scalar(keys(%count));
+    $lib_name=$lib_name.".$version."."$coverage.".scalar(keys(%id_for_lib));
     open (my $libtab_out, ">", $lib_name.".tab") or die $!;
     open (my $libfa_out, ">", $lib_name.".fasta") or die $!;
     open (my $libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
     my %fasta=();
         while (<$libtab>) {
             @line=split("\t",$_);
-            if ($designs{$line[0]}) {
+            if (${$id_for_lib{$line[6]}}{$line[0]}) {
+				$all_ids{$line[0]}++;
 				if (!exists($fasta{$line[0]})) {
 					print $libtab_out $_;
 					if ($correct_five_prime eq "true") {
@@ -919,7 +976,7 @@ sub filter_library{
     open (my $libgff_out, ">", $lib_name.".gff") or die $!;
         foreach my $line (<$libgff>) {
             if($line=~m/id\=(.+?)\;/){
-                if ($designs{$1}) {
+                if ($all_ids{$1}) {
                     print $libgff_out $line;     
                 }
             }else{
@@ -943,21 +1000,25 @@ sub filter_library{
     close $libgff_out;
     close $libgff;
     open (my $coverage_file, ">", $lib_name.".coverage.tab") or die $!;   
-        foreach my $key (keys %count) {
+        foreach my $key (keys %id_for_lib) {
             print $coverage_file $key."\t".$count{$key}."\n";
 			delete $genes_from_list{$key};
         }
     close $coverage_file;
     open (my $mis, ">", $lib_name.".missing.tab") or die $!;   
-        foreach my $key (keys %missing) {            
-			if (!exists($count{$key})) {		
-				print $mis $key."\t".$missing{$key}."\n";
-				delete $genes_from_list{$key};
-			}	    
+        foreach my $otherkey (keys %id_for_lib) {
+			my $temp=0;
+			foreach my $key (keys %genes_from_list) {
+				if ($otherkey=~m/$key/) {
+					$temp=1;
+				}
+			}
+			if ($temp==0) {
+				print $mis $otherkey."is missing from the library. It was covered by ".$isgone{$otherkey}." designs. Maybe it was covered two low or not found in the cld database.\n";
+			}
+			
         }
-		foreach my $key (keys %genes_from_list) {
-			print $mis $key."\t0\n";
-		}
+		print $mis (scalar keys %genes_from_list) - (scalar keys %id_for_lib )."are missing ebcause of two harsh design citeria\n.";
     close $mis;    
 }
 
@@ -2354,7 +2415,6 @@ sub find_and_print_CRISPRS {
             push @cuts, $cut;
             $cut = $cut + $cutnumber;
       }
-      
       #################################################################################################################################################################################
       # cut the sequence into equal peaces, so that each forked child can work on one part (paralell!)
       #################################################################################################################################################################################
@@ -2367,14 +2427,14 @@ sub find_and_print_CRISPRS {
             my %Cpos = make_pos_index( \$seq, "C" );
             my %Apos = make_pos_index( \$seq, "A" );
             my %Tpos = make_pos_index( \$seq, "T" );
-	    my %combined;
-	   % {$combined{"G"}}=%Gpos;
-	     % {$combined{"A"}}=%Apos;
-	     % {$combined{"C"}}=%Cpos;
-	     % {$combined{"T"}}=%Tpos;
-            my %dont_care_ind=();
-            my %dont_care_ind_right=();
-            my %PAMindex = ();
+			my %combined;
+			% {$combined{"G"}}=%Gpos;
+			% {$combined{"A"}}=%Apos;
+			% {$combined{"C"}}=%Cpos;
+			% {$combined{"T"}}=%Tpos;
+			my %dont_care_ind=();
+			my %dont_care_ind_right=();
+			my %PAMindex = ();
             
             ###########################################################################################################################################################################
             # Single Sequence
@@ -2417,7 +2477,7 @@ sub find_and_print_CRISPRS {
                                           !($taleseq=~m/TTTTT/) 
                                     ) {
                                          my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));
-					  my @new_score=(0,0,0);
+										my @new_score=(0,0,0);
                                           if(exists($Gpos{$Gposind}) && exists($Gpos{$Gposind+1})){
                                               $new_score[2]++;
                                           }
@@ -2435,8 +2495,8 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
-                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
-                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
+                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset + 500;
+                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset + 500;
                                           my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score);
                                           
                                           #############################################################################################################################################
@@ -2520,8 +2580,8 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
-                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
-                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
+                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset+500;
+                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset+500;
                                           my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score);
                                           
                                           #############################################################################################################################################
@@ -2632,8 +2692,8 @@ sub find_and_print_CRISPRS {
                                                 ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                                 ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length+$spacerlength+$length+2 + 2 ) + $cut;
                                                 ${ $CRISPR_hash{$name} }{"length"} =  $length+$spacerlength+$length+2 + 2;
-                                                my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
-                                                my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
+                                                my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset+500;
+                                                my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset+500;
                                                 my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score);
                                                 
                                                 #######################################################################################################################################
