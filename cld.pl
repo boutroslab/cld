@@ -2623,7 +2623,7 @@ sub find_and_print_CRISPRS {
 										my @new_score=(0,0,0,0);
 										if (defined $scoring_module) {
 											require $scoring_module;
-											$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-4, 30)));
+											$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
 											if ($weights{"custom_efficacy"}) {												
 												$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
 											}else{
@@ -2750,7 +2750,7 @@ sub find_and_print_CRISPRS {
 											 my @new_score=(0,0,0,0);
 												if (defined $scoring_module) {
 													require $scoring_module;
-													$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-6, 30)))+calc_score(substr( $seq, ( $Cposind + $length + 1 + $spacerlength-4),30));
+													$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)))+calc_score(substr( $seq, ( $Cposind + $length + 1 + $spacerlength-4),30));
 													if ($weights{"custom_efficacy"}) {												
 														$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
 													}else{
