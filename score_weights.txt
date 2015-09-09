@@ -1,0 +1,13 @@
+gene_annotation=1
+exon_annotation=1
+cds_annotation=1
+cpg_annotation=1
+start_annotation=1
+stop_annotation=1
+microhom_efficacy=1
+custom_efficacy=1
+seedgc_efficacy=1
+totalgc_efficacy=1
+startingG_efficacy=1
+preceedingGG_efficacy=1
+

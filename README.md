@@ -52,12 +52,14 @@ Options:
 		    --rsync-link=<rsync://path/to/dir>	         Specify an ftp repository to build the database from.
 								    it must be one of the organisms available in ENSEMBLs ftp repository.
 								    And in the same format as its ENSEMBL rsync directoy path.
-								    E.g.: rsync://ftp.ensembl.org/ensembl/pub/current_embl/
+								    E.g.: rsync://ftp.ensembl.org/ensembl/pub/release-81/
 
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
-		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file. 
+		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file.
+			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
 
 		 library_assembly 				to format a library from an identification folder.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -74,8 +76,10 @@ Options:
 								   				 may be "true" or "false" default :true.	    
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
 								    			this folder must be prepared by --task= target_ident
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-an be : true or false (default:true)
 
-		 end_to_end 							to perform and end_to_end analysis from target identification to library formatting
+		 end_to_end 							to perform and end-to-end analysis from target identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
 		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file. 
@@ -87,6 +91,10 @@ Options:
 		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
 								    			default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
+													-can be : true or false (default:true)
+			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
 
 	    --version							- Show version.
 	    --help								- Show this message.

@@ -55,7 +55,9 @@ my (
     $opt_rsync_link,
     $ver,
     $help,
-	$cover_many_transcripts
+	$cover_many_transcripts,
+	$scoring_module,
+	$scoreweight_file
     );
 GetOptions(
 	    'task=s'		=> \$opt_task,
@@ -73,7 +75,9 @@ GetOptions(
 	    'rsync-link=s'	=> \$opt_rsync_link,
 	    'version'		=> \$ver,
 	    'help'		=> \$help,
-		'spread-over-transcripts=s'=> \$cover_many_transcripts
+		'spread-over-transcripts=s'=> \$cover_many_transcripts,
+		'scoring-module=s'=>\$scoring_module,
+		'scoring-weights=s'=>\$scoreweight_file
 	);
 my $ver_str = "$script_name, version $script_version, $script_date\nAuthor $script_years Florian Heigwer\n";
 my $help_str = qq{Usage: cld --task=end_to_end [options=value] ...
@@ -93,7 +97,9 @@ Options:
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
-		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file. 
+		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file.
+			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
 
 		 library_assembly 				to format a library from an identification folder.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -127,6 +133,8 @@ Options:
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
 			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
 													-can be : true or false (default:true)
+			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
 
 	    --version							- Show version.
 	    --help								- Show this message.
@@ -159,6 +167,8 @@ for (my $i=0; $i<scalar(@ARGV); $i++)
 	if ($ARGV[$i] eq '-rsync-link'		){$opt_rsync_link	= int($ARGV[++$i]); }
 	if ($ARGV[$i] eq '-input-folder'	){$opt_input_folder		= int($ARGV[++$i]); }
 	if ($ARGV[$i] eq '-spread-over-transcripts'	){$cover_many_transcripts		= int($ARGV[++$i]); }
+	if ($ARGV[$i] eq '-scoring-module'	){$scoring_module		= int($ARGV[++$i]); }
+	if ($ARGV[$i] eq '-scoring-weights'	){$scoreweight_file		= int($ARGV[++$i]); }
     }
 }
 
@@ -256,7 +266,7 @@ Version 0.1.4
 
 =cut
 
-our $VERSION = '0.1.4';
+our $VERSION = '0.1.8';
 
 =head1 SUBROUTINES/METHODS
 =head2 calculate_CRISPR_score
@@ -272,6 +282,7 @@ our $VERSION = '0.1.4';
 
 sub calculate_CRISPR_score {
       my %score = ();
+	  my $gene_name=$_[7];
       my @new_score=@{$_[6]};  
       my $expression="[";
       if (($_[1]->{"number_of_CDS"}>0)) {
@@ -303,12 +314,16 @@ sub calculate_CRISPR_score {
             }
             foreach  my $anno ( @{$annotations} ) {
                   if ( $anno =~ m/gene_(\S+)_[0-9]+_[0-9]+/ ) {
+						my $temp=$1;
                         $new_score[1]++;
-                        ${ $score{"gene"} }{$1}++;                      
+						#print "$temp\t$gene_name\n";
+						if ($temp=~m/$gene_name/) {
+							${ $score{"gene"} }{$temp}++;
+						}		
                   } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
 						${ $score{"gene_to_exon"} }{$3}++;
-			$new_score[1]=$new_score[1]+5/$2;
+						$new_score[1]=$new_score[1]+5/$2;
                         if (exists $score{"transcripts"}) {
                               $score{"transcripts"}=$score{"transcripts"}."_".$1;
                         }else{
@@ -411,7 +426,7 @@ sub calculate_CRISPR_score {
 #########################################################################################
 =cut
 sub make_CRISPR_statistics {
-      if ( $_[0]->{"gene_exclusive"} && !exists $_[1]->{"gene"} && $_[2] != 1 ) {
+      if ( $_[0]->{"gene_exclusive"} eq "true" && !exists $_[1]->{"gene"} && $_[2] != 1 ) {
             $_[3]->{"Number of designs excluded because they did not hit any gene"}++;
             return 1;
       }
@@ -882,7 +897,7 @@ sub filter_library{
 		foreach my $key (keys %ids){
 			while ((scalar (keys %{$id_for_lib{$key}})) < $coverage) {
 					foreach my $subkey (
-					sort {scalar keys %{${$ids{$key}}{$b}} <=> scalar keys %{${$ids{$key}}{$a}} } keys %{$ids{$key}}
+					sort {scalar keys %{${$ids{$key}}{$a}} <=> scalar keys %{${$ids{$key}}{$b}} } keys %{$ids{$key}}
 					){					
 					if (defined((keys(%{${$ids{$key}}{$subkey}}))[0]) && ((scalar (keys %{$id_for_lib{$key}})) < $coverage)) {
 						$temp= (keys(%{${$ids{$key}}{$subkey}}))[0];
@@ -1298,6 +1313,17 @@ sub make_a_crispr_library{
       my %trees               = ();
       my $seqio_obj           = "";
       my %something           = ();
+	  my %weights=();
+	  if (defined $scoreweight_file) {
+		open(my $scorefile, "<", $scoreweight_file) or die $!;
+			while (<$scorefile>) {
+				if ($_=~m/$(.+)=(\d+)/) {
+					$weights{$1}=$2;
+				}				
+			}			
+		close($scoreweight_file);
+	  }
+	  
       my $parallel_number     = 2;
       $something{"input_file"}=$_[1];
       #create a time stamped output folder
@@ -1880,7 +1906,7 @@ sub make_a_crispr_library{
                                     @{${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"}}[0]=${ ${ $CRISPR_hash{$fname} } {$key} }{"score"};
                                     ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"};
                                     @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]=@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]*100/((5*(scalar(keys(%CDS_hash))))+(scalar(keys(%CDS_hash)))+(5*(scalar(keys(%transcripts_hash))))+1);
-                                    @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]=100*(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]-(-21))/(40-(-21));
+                                    #@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]=100*(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]-(-21))/(40-(-21));
                               }
                               foreach my $i (0..2){
                                     @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[$i]=round_digits(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[$i],4);
@@ -1896,10 +1922,10 @@ sub make_a_crispr_library{
                               
                               open (my $outfiletab, ">", $temp_dir . "/" . $fname . "_" . "table.tab");
                                     if ($something{"kind"} eq "single") {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\n";
+                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tEXTRA_Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\n";
                                     }
                                     else {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\n";
+                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tEXTRA_Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\n";
                                     }
 									if ($something{"purpose"} eq "non-coding") {
 											PRINTLOOP: foreach my $key ( sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} cmp $CRISPR_hash{$fname}{$a}->{"spec_score"} } keys(%{$CRISPR_hash{$fname}}) ) {
@@ -1916,12 +1942,13 @@ sub make_a_crispr_library{
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"length"} . "\t";
 														  }
 														  #print its start on this whole sequence these are not genomic coordinates
+														   my @locus=split("::",$statistics{$fname}{"seq_location"});
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} . "\t";
+																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
 														  }
-														  #print its end on this whole sequence these are not genomic coordinates
+														  #print its end on this whole sequence these are  genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} . "\t";
+																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
 														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} . "\t";
@@ -2044,17 +2071,18 @@ sub make_a_crispr_library{
 														  #print the candidates name
 														  print $outfiletab "$key\t";
 														  my @splithit = split("¤¤",$hit);
-														  #print its length on this whole sequence these are not genomic coordinates
+														  #print its length on this whole sequence these are genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"length"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"length"} . "\t";
 														  }
-														  #print its start on this whole sequence these are not genomic coordinates
+														  #print its start on this whole sequence these are  genomic coordinates
+														  my @locus=split("::",$statistics{$fname}{"seq_location"});
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} . "\t";
+																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
 														  }
-														  #print its end on this whole sequence these are not genomic coordinates
+														  #print its end on this whole sequence these are  genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} . "\t";
+																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
 														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} . "\t";
@@ -2178,8 +2206,8 @@ sub make_a_crispr_library{
                                      print $gfffile "##gff-version 3\n";
                                           PRINTLOOP: foreach my $key ( sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} } sort { $CRISPR_hash{$fname}{$b}->{"anno_score"} <=> $CRISPR_hash{$fname}{$a}->{"anno_score"} } sort { $CRISPR_hash{$fname}{$b}->{"eff_score"} <=> $CRISPR_hash{$fname}{$a}->{"eff_score"} } sort { $CRISPR_hash{$fname}{$b}->{"exon"} cmp $CRISPR_hash{$fname}{$a}->{"exon"} } keys(%{$CRISPR_hash{$fname}}) ) {
                                                 my @locus=split("::",$statistics{$fname}{"seq_location"});
-                                                print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1])."\t";
-                                                print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
+                                                print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1])."\t";
+                                                print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
                                                 if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
                                                       print $gfffile "-"."\t."."\t";
                                                 }else{
@@ -2389,6 +2417,7 @@ sub find_and_print_CRISPRS {
       my $parallel_number           = $_[6];
       my %something                 = %{ $_[7] };
       my $seq_obj                   = $$seq_obj_ref;
+	  my $gene_id					= $seq_obj->id;
       my $whole_seq                 = $seq_obj->seq;
       my $count                     = 0;
       my %finished_CRISPR_hash      = ();
@@ -2476,28 +2505,57 @@ sub find_and_print_CRISPRS {
                                           $something{"min_G"} < $flank_array[3] && $something{"max_G"} > $flank_array[3] &&
                                           !($taleseq=~m/TTTTT/) 
                                     ) {
-                                         my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));
-										my @new_score=(0,0,0);
+                                         my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));										
+										my @new_score=(0,0,0,0);
+										if (defined $scoring_module) {
+											require $scoring_module;
+											$new_score[3]=calc_score(substr( $seq, ($Gposind-4), 30));
+											if ($weights{"custom_efficacy"}) {												
+												$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
+											}else{
+												$new_score[2]=$new_score[2]+$new_score[3];
+											}	
+										}
                                           if(exists($Gpos{$Gposind}) && exists($Gpos{$Gposind+1})){
-                                              $new_score[2]++;
+											if ($weights{"preceedingGG_efficacy"}) {												
+												$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
+											}else{
+												$new_score[2]=$new_score[2]+1
+											}	
                                           }
                                           if(exists($Gpos{$Gposind})){
-                                              $new_score[2]++;
+                                              if ($weights{"startingG_efficacy"}) {												
+												$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
+											}else{
+												$new_score[2]=$new_score[2]+1
+											}
                                           }
-                                          if(($flank_array[3]+$flank_array[1])>80){
-                                              $new_score[2]--;
+                                          if(($flank_array[3]+$flank_array[1])>50){
+												if ($weights{"totalgc_efficacy"}) {												
+													$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
+												}else{
+													$new_score[2]=$new_score[2]+1
+												}
                                           }
                                           @flank_array = find_base_count( substr( $taleseq, $length-7,6) );
                                           if(($flank_array[3]+$flank_array[1])>70){
-                                              $new_score[2]++;
+                                              if ($weights{"seedgc_efficacy"}) {												
+													$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
+												}else{
+													$new_score[2]=$new_score[2]+1
+												}
                                           }
-                                          $new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Gposind + $length +2 -5 ),5,\$seq); 
+                                           if ($weights{"microhom_efficacy"}) {
+												$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Gposind + $length +2 -5 ),5,\$seq);
+										   }else{
+												$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Gposind + $length +2 -5 ),5,\$seq);
+										   }
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
-                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset + 500;
-                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset + 500;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score);
+                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id);
                                           
                                           #############################################################################################################################################
                                           #Statistics
@@ -2562,27 +2620,56 @@ sub find_and_print_CRISPRS {
                                           !($taleseq=~m/AAAAA/) 
                                     ){
                                          my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Cposind + $cut-$start_of_start)/3));
-					  my @new_score=(0,0,0);
+										my @new_score=(0,0,0,0);
+										if (defined $scoring_module) {
+											require $scoring_module;
+											$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-4, 30)));
+											if ($weights{"custom_efficacy"}) {												
+												$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
+											}else{
+												$new_score[2]=$new_score[2]+$new_score[3];
+											}	
+										}
                                           if(exists($Cpos{($Cposind + $length + 1)}) && exists($Cpos{($Cposind + $length)})){
-                                                $new_score[2]++;
+                                               if ($weights{"preceedingGG_efficacy"}) {												
+													$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
+												}else{
+													$new_score[2]=$new_score[2]+1
+												}
                                           }
                                           if(exists( $Cpos{($Cposind + $length + 1)}) ){
-                                                $new_score[2]++;
+                                                if ($weights{"startingG_efficacy"}) {												
+												$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
+											}else{
+												$new_score[2]=$new_score[2]+1
+											}
                                           }
-                                          if(($flank_array[3]+$flank_array[1])>80){
-                                                $new_score[2]--;
+                                          if(($flank_array[3]+$flank_array[1])>50){
+                                                if ($weights{"totalgc_efficacy"}) {												
+													$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
+												}else{
+													$new_score[2]=$new_score[2]+1
+												}
                                           }
                                           @flank_array = find_base_count( substr( $taleseq, 0,6) );
                                           if(($flank_array[3]+$flank_array[1])>70){
-                                                $new_score[2]++;
+                                               if ($weights{"seedgc_efficacy"}) {												
+													$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
+												}else{
+													$new_score[2]=$new_score[2]+1
+												}
                                           }
-                                          $new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + 5 ),5,\$seq);
+										  if ($weights{"microhom_efficacy"}) {
+											$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + 5 ),5,\$seq);
+										  }else{
+											$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + 5 ),5,\$seq);
+										  }
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
-                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset+500;
-                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset+500;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score);
+                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score,$gene_id);
                                           
                                           #############################################################################################################################################
                                           #Statistics
@@ -2660,41 +2747,83 @@ sub find_and_print_CRISPRS {
                                                 !($completeseq=~/TTTTT/)
                                           ) {
                                           my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Cposind + $cut-$start_of_start)/3));
-					    my @new_score=(0,0,0);
+											 my @new_score=(0,0,0,0);
+												if (defined $scoring_module) {
+													require $scoring_module;
+													$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-6, 30)))+calc_score(substr( $seq, ( $Cposind + $length + 1 + $spacerlength-4),30));
+													if ($weights{"custom_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
+													}else{
+														$new_score[2]=$new_score[2]+$new_score[3];
+													}	
+												}
                                                 if(exists($Cpos{( $Cposind + $length + 1 )}) && exists($Cpos{( $Cposind + $length)})){
-                                                    $new_score[2]++;
+                                                    if ($weights{"preceedingGG_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
                                                 if(exists($Cpos{( $Cposind + $length + 1 )})){
-                                                    $new_score[2]++;
+                                                   if ($weights{"startingG_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
                                                 if(exists($Gpos{( $Cposind + $length + 1 + $spacerlength )}) && exists($Gpos{( $Cposind + $length + 2 + $spacerlength )})){
-                                                    $new_score[2]++;
+                                                    if ($weights{"preceedingGG_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
                                                 if(exists($Gpos{( $Cposind + $length + 1 + $spacerlength )})){
-                                                    $new_score[2]++;
+                                                   if ($weights{"startingG_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
-                                                if(($flank_array[3]+$flank_array[1])>80){
-                                                    $new_score[2]--;
+                                                if(($flank_array[3]+$flank_array[1])>50){
+                                                    if ($weights{"totalgc_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
                                                 
                                                 @flank_array = find_base_count(substr( $left_taleseq, 0,6));
                                                 if(($flank_array[3]+$flank_array[1])>70){
-                                                    $new_score[2]++;
+                                                    if ($weights{"seedgc_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
                                                 
                                                 @flank_array = find_base_count(substr( $right_taleseq, $length-7,6));
                                                 if(($flank_array[3]+$flank_array[1])>70){
-                                                    $new_score[2]++;
+                                                    if ($weights{"seedgc_efficacy"}) {												
+														$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
+													}else{
+														$new_score[2]=$new_score[2]+1
+													}
                                                 }
-                                                $new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +5 ),5,\$seq); 
-                                                $new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +2 + $spacerlength -5 ),5,\$seq);
+												if ($weights{"microhom_efficacy"}) {
+													$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + $length +5 ),5,\$seq); 
+													$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + $length +2 + $spacerlength -5 ),5,\$seq);
+												}else{
+													$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +5 ),5,\$seq); 
+													$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +2 + $spacerlength -5 ),5,\$seq);
+												}
                                                 @{${ $CRISPR_hash{$name} }{"lengthcombo"}}=($length,$spacerlength);
                                                 ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                                 ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length+$spacerlength+$length+2 + 2 ) + $cut;
                                                 ${ $CRISPR_hash{$name} }{"length"} =  $length+$spacerlength+$length+2 + 2;
-                                                my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset+500;
-                                                my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset+500;
-                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score);
+                                                my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+                                                my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
                                                 
                                                 #######################################################################################################################################
                                                 #Statistics
