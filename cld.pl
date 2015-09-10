@@ -262,11 +262,11 @@ if($opt_task eq "make_database"){
 
 =head1 VERSION
 
-Version 0.1.4
+Version 0.2.0
 
 =cut
 
-our $VERSION = '0.1.8';
+our $VERSION = '0.2.0';
 
 =head1 SUBROUTINES/METHODS
 =head2 calculate_CRISPR_score
@@ -283,7 +283,8 @@ our $VERSION = '0.1.8';
 sub calculate_CRISPR_score {
       my %score = ();
 	  my $gene_name=$_[7];
-      my @new_score=@{$_[6]};  
+      my @new_score=@{$_[6]};
+	  my %weights=%{$_[8]};
       my $expression="[";
       if (($_[1]->{"number_of_CDS"}>0)) {
          foreach my $number(1..$_[1]->{"number_of_CDS"}){
@@ -315,7 +316,13 @@ sub calculate_CRISPR_score {
             foreach  my $anno ( @{$annotations} ) {
                   if ( $anno =~ m/gene_(\S+)_[0-9]+_[0-9]+/ ) {
 						my $temp=$1;
-                        $new_score[1]++;
+						 if ($weights{"gene_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"gene_annotation"};
+						}else{
+							$new_score[1]++;
+						 }
+						
+                        
 						#print "$temp\t$gene_name\n";
 						if ($temp=~m/$gene_name/) {
 							${ $score{"gene"} }{$temp}++;
@@ -323,7 +330,11 @@ sub calculate_CRISPR_score {
                   } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
 						${ $score{"gene_to_exon"} }{$3}++;
-						$new_score[1]=$new_score[1]+5/$2;
+						if ($weights{"exon_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"exon_annotation"}*5/$2;
+						}else{
+							$new_score[1]=$new_score[1]+5/$2;
+						}
                         if (exists $score{"transcripts"}) {
                               $score{"transcripts"}=$score{"transcripts"}."_".$1;
                         }else{
@@ -333,9 +344,19 @@ sub calculate_CRISPR_score {
                         
                   } elsif ( $anno =~ m/CpG/ ) {
                         $score{"CpG"}++;
-			$new_score[1]--;
+						if ($weights{"cpg_annotation"}) {	
+							$new_score[1]=$new_score[1]-$weights{"cpg_annotation"};
+						}else{
+							$new_score[1]--;
+						 }
                   } elsif ( $anno =~ m/CDS::(\S+)::($expression)::(\S+)\_(\d+)_(\d+)$/ ) {
-                        $new_score[1]=$new_score[1]+5/$2;
+                        
+						if ($weights{"cds_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"cds_annotation"}*5/$2;
+						}else{
+							$new_score[1]=$new_score[1]+5/$2;
+						}
+						
 		       if($_[1]->{"specific_transcript"} ne "any"){
 			   if ($1 eq $_[1]->{"specific_transcript"}) {
                                     $score{"CDS_1"}++;
@@ -349,7 +370,11 @@ sub calculate_CRISPR_score {
                   } elsif ( $anno =~ m/CDS::(\S+)::(\d)::(\S+)\_(\d+)_(\d+)$/ ) {
                         $score{"CDS"}++;
 						${ $score{"gene_to_CDS"}}{$3}++;
-                        $new_score[1]++;
+						if ($weights{"cds_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"cds_annotation"};
+						}else{
+							$new_score[1]++;
+						}
                   }
             }
             my $strand=1;
@@ -405,10 +430,18 @@ sub calculate_CRISPR_score {
             foreach  my $anno ( @{$annotations} ) {
                   if ( $anno =~ m/start_codon/ ) {
                         $score{"start_codon"}++;
-                        $new_score[1]++;
+                        if ($weights{"start_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"start_annotation"};
+						}else{
+							$new_score[1]++;
+						 }
                   }elsif ( $anno =~ m/stop_codon/ ) {
                         $score{"stop_codon"}++;
-                        $new_score[1]++;
+                        if ($weights{"stop_annotation"}) {	
+							$new_score[1]=$new_score[1]+$weights{"stop_annotation"};
+						}else{
+							$new_score[1]++;
+						 }
                   }
             }            
       }
@@ -875,6 +908,7 @@ sub filter_library{
 		${${$id_with_info{$line[6]}}{$line[0]}}{"anno_score"}=$line[16];
 		${${$id_with_info{$line[6]}}{$line[0]}}{"spec_score"}=$line[15];
 		${${$id_with_info{$line[6]}}{$line[0]}}{"eff_score"}=$line[17];
+		${${$id_with_info{$line[6]}}{$line[0]}}{"custom_score"}=$line[18];
 		${${$id_with_info{$line[6]}}{$line[0]}}{"seq"}=$line[5];
 	}
 	close $libtab;
@@ -914,6 +948,7 @@ sub filter_library{
 				foreach my $element (
 					sort { ${$id_with_info{$key}}{$b}->{"anno_score"} <=> ${$id_with_info{$key}}{$a}->{"anno_score"} }
 					sort { ${$id_with_info{$key}}{$b}->{"spec_score"} <=> ${$id_with_info{$key}}{$a}->{"spec_score"} }
+					sort { ${$id_with_info{$key}}{$b}->{"custom_score"} <=> ${$id_with_info{$key}}{$a}->{"custom_score"} }
 					sort { ${$id_with_info{$key}}{$b}->{"eff_score"} <=> ${$id_with_info{$key}}{$a}->{"eff_score"} }
 					keys %{$id_with_info{$key}}
 					){
@@ -1313,11 +1348,11 @@ sub make_a_crispr_library{
       my %trees               = ();
       my $seqio_obj           = "";
       my %something           = ();
-	  my %weights=();
+	  my %weights			  = ();
 	  if (defined $scoreweight_file) {
-		open(my $scorefile, "<", $scoreweight_file) or die $!;
-			while (<$scorefile>) {
-				if ($_=~m/$(.+)=(\d+)/) {
+		open(my $scorefile, $scoreweight_file) or die $!;
+			while (<$scorefile>) {				
+				if ($_=~m/^(.+)\=(\d+)$/) {
 					$weights{$1}=$2;
 				}				
 			}			
@@ -1481,7 +1516,8 @@ sub make_a_crispr_library{
                                                                   $temp_dir,
                                                                   $parallel_number,
                                                                   \%something,
-                                                                  $location_end);
+                                                                  $location_end,
+																  \%weights);
                         %{$CRISPR_hash{$fname}} = %{$findings[0]};
                         %{$statistics{$fname}} = (%{$statistics{$fname}},%{$findings[1]});
                   }
@@ -1905,7 +1941,7 @@ sub make_a_crispr_library{
                               if(exists(${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"})){
                                     @{${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"}}[0]=${ ${ $CRISPR_hash{$fname} } {$key} }{"score"};
                                     ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"};
-                                    @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]=@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]*100/((5*(scalar(keys(%CDS_hash))))+(scalar(keys(%CDS_hash)))+(5*(scalar(keys(%transcripts_hash))))+1);
+									#@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]=@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]*100/((5*(scalar(keys(%CDS_hash))))+(scalar(keys(%CDS_hash)))+(5*(scalar(keys(%transcripts_hash))))+1);
                                     #@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]=100*(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]-(-21))/(40-(-21));
                               }
                               foreach my $i (0..2){
@@ -2427,6 +2463,7 @@ sub find_and_print_CRISPRS {
       my @cuts                      = ();
       my %tempstatistics            = ();
       my $start_of_start            = 0 ;
+	  my %weights					= %{$_[9]};
       if ($dont_asses_context==0) {
             my $annotations   = $trees{$chrom}->fetch( int($_[2]), int(int($_[8])) );
             foreach my $anno ( sort( @{$annotations} ) ) {
@@ -2507,6 +2544,7 @@ sub find_and_print_CRISPRS {
                                     ) {
                                          my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));										
 										my @new_score=(0,0,0,0);
+										#print join("||",(keys %weights))."\n";
 										if (defined $scoring_module) {
 											require $scoring_module;
 											$new_score[3]=calc_score(substr( $seq, ($Gposind-4), 30));
@@ -2555,7 +2593,7 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id);
+                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id,\%weights);
                                           
                                           #############################################################################################################################################
                                           #Statistics
@@ -2669,7 +2707,7 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score,$gene_id);
+                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score,$gene_id,\%weights);
                                           
                                           #############################################################################################################################################
                                           #Statistics
@@ -2823,7 +2861,7 @@ sub find_and_print_CRISPRS {
                                                 ${ $CRISPR_hash{$name} }{"length"} =  $length+$spacerlength+$length+2 + 2;
                                                 my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
                                                 my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
+                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id,\%weights);
                                                 
                                                 #######################################################################################################################################
                                                 #Statistics
