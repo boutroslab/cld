@@ -93,6 +93,14 @@ Options:
 								    it must be one of the organisms available in ENSEMBLs ftp repository.
 								    And in the same format as its ENSEMBL rsync directoy path.
 								    E.g.: rsync://ftp.ensembl.org/ensembl/pub/release-81/
+								    
+								    rsync://ftp.ensemblgenomes.org/all/pub/protists/current/
+
+									rsync://ftp.ensemblgenomes.org/all/pub/plants/current/
+
+									rsync://ftp.ensemblgenomes.org/all/pub/fungi/current/
+									
+									rsync://ftp.ensemblgenomes.org/all/pub/metazoa/current/
 
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -1326,10 +1334,10 @@ sub make_temp_fasta_file {
       if ( open (my $failfile, "<", $_[4] . "/failfile.tab") && !( $_[2]->{"ignore_missing_id"} eq "true")) {
             my $error="";
             while (<$failfile>) {
-                  $error.=$_."\n";
+                  $error.=$_;
             }
             close($failfile);
-            die "No Database entry found for <br> \"". $error."\" in the \" ".$_[2]->{"ref_organism"}."\" genome.\n Please enter a valid ensembl ID or gene symbol (case sensitive) or change the input option above to FASTA sequence.\n";;
+            die "No Database entry found for \n\"". $error."\" in the \" ".$_[2]->{"ref_organism"}."\" genome.\n Please enter a valid ensembl ID or gene symbol (case sensitive) or change the input option above to FASTA sequence.\n";
       }
       
 }

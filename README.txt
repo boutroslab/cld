@@ -94,7 +94,16 @@ Options:
 		    --rsync-link=<rsync://path/to/dir>	         Specify an ftp repository to build the database from.
 								    it must be one of the organisms available in ENSEMBLs ftp repository.
 								    And in the same format as its ENSEMBL rsync directoy path.
-								    E.g.: rsync://ftp.ensembl.org/ensembl/pub/release-81/
+								    E.g.: 
+								    rsync://ftp.ensembl.org/ensembl/pub/release-81/
+								    
+								    rsync://ftp.ensemblgenomes.org/all/pub/protists/current/
+
+									rsync://ftp.ensemblgenomes.org/all/pub/plants/current/
+
+									rsync://ftp.ensemblgenomes.org/all/pub/fungi/current/
+									
+									rsync://ftp.ensemblgenomes.org/all/pub/metazoa/current/
 
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
