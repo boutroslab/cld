@@ -58,7 +58,7 @@ purpose	||	Knockdown/-out as pupose requires designs to hit in coding sequences 
 gene_exclusive	||	define if desired need to target a region within a gene	||	boolean (true or false)
 exon_exclusive	||	define if desired need to target a region within a exon/transcript/mRNA	||	boolean (true or false)
 CDS_only	||	define if desired need to target a region within a coding region	||	boolean (true or false)
-CpG_exclusive	||	define if desired are allowed to target a region within a CpG island	||	boolean (true or false)
+CpG_exclusive	||	define if desired are allowed to target only a region without a CpG island	||	boolean (true or false)
 specific_exon	||	define if a specific exon number is to be targeted	||	numeric
 retrieve_recomb_matrix	||	if the sequences for homology arms should be computed and reported	||	boolean (true or false)
 bowtie_version	||	version of bowtie to be used for off-target analysis. Here bowtie is more sensitive to mismatches of single designs, and bowtie2 is optimized for paired alignments of sequences 	||	bowtie or bowtie2
