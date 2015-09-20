@@ -7,7 +7,9 @@ cld is installed by copying the cld binary to the path of choice.
 We recommend /usr/bin or /usr/local/bin as these paths are usually 
 already included in the computers PATH search variable.
 
-unzip cld_*.zip
+change your directory to
+
+cd BINARIES/0.2.0/cld-your-system/
 
 sudo cp cld_*/cld /usr/bin/
 
