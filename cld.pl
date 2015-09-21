@@ -1360,7 +1360,7 @@ sub make_a_crispr_library{
 	  if (defined $scoreweight_file) {
 		open(my $scorefile, $scoreweight_file) or die $!;
 			while (<$scorefile>) {				
-				if ($_=~m/^(.+)\=(\d+)$/) {
+				if ($_=~m/^(.+)\=([\d\.\+\-]+)$/) {
 					$weights{$1}=$2;
 				}				
 			}			
