@@ -35,7 +35,7 @@ my $max_parallel= my $parallel_number =$procs->max_online;
   
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','0.1.7','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.0.0','2015-09-01','2013-2015');
 
 
 
@@ -151,11 +151,11 @@ Options:
 print (($ver ? $ver_str : ''), ($help ? $help_str : ''));
 if(!can_run('bowtie') ){
 	print "Cannot find bowtie. Please download and install from\n http://bowtie-bio.sourceforge.net/index.shtml\n";
-	print $ver_str."\n".$help_str."\n";
+	print $ver_str."\n";
 	exit;
 	}elsif(!can_run('bowtie2')){
 	print "Cannot find bowtie2. Please download and install from\n http://bowtie-bio.sourceforge.net/bowtie2/index.shtml\n";
-	print $ver_str."\n".$help_str."\n";
+	print $ver_str."\n";
 	exit;
 }
 for (my $i=0; $i<scalar(@ARGV); $i++)
@@ -181,7 +181,7 @@ for (my $i=0; $i<scalar(@ARGV); $i++)
 }
 
 if(!defined($opt_task)){
-   print "\nThere must be any specific task specified.\n\n".$ver_str.$help_str;
+   print "\nThere must be any specific task specified.\n\n".$ver_str;
    exit;
 }
 
@@ -194,7 +194,7 @@ if($opt_task eq "make_database"){
 		  );
 }elsif($opt_task eq "target_ident"){
 	if(!defined($opt_gene_list)){
-		print "\nThere must be an gene list specified.\n\n".$ver_str.$help_str;
+		print "\nThere must be an gene list specified.\n\n".$ver_str;
 	   exit;
 	}
     if(!defined($opt_gene_list) or !(-f $opt_gene_list)){ die "The gene list file $opt_gene_list could not be opened. Either the user has no rights the read it or the file does not exist." }
@@ -207,7 +207,7 @@ if($opt_task eq "make_database"){
 			   ),
 }elsif($opt_task eq "end_to_end"){
 	if(!defined($opt_gene_list)){
-		print "\nThere must be an gene list specified.\n\n".$ver_str.$help_str;
+		print "\nThere must be an gene list specified.\n\n".$ver_str;
 	   exit;
 	}
     if(!defined($opt_gene_list) or !(-f $opt_gene_list)){ die "The gene list file $opt_gene_list could not be opened. Either the user has no rights the read it or the file does not exist." }
@@ -238,7 +238,7 @@ if($opt_task eq "make_database"){
 		);
 }elsif($opt_task eq "library_assembly"){
 	if(!defined($opt_gene_list)){
-		print "\nThere must be an gene list specified.\n\n".$ver_str.$help_str;
+		print "\nThere must be an gene list specified.\n\n".$ver_str;
 	   exit;
 	}
     if(!defined($opt_gene_list) or !(-f $opt_gene_list)){ die "The gene list file $opt_gene_list could not be opened. Either the user has no rights the read it or the file does not exist." }
@@ -270,11 +270,11 @@ if($opt_task eq "make_database"){
 
 =head1 VERSION
 
-Version 0.2.0
+Version 1.0.0
 
 =cut
 
-our $VERSION = '0.2.0';
+our $VERSION = '1.0.0';
 
 =head1 SUBROUTINES/METHODS
 =head2 calculate_CRISPR_score
@@ -307,11 +307,9 @@ sub calculate_CRISPR_score {
       my %transcripts=();
       if ( exists $_[0]->{$_[4]} ) { # check wethere the tree exists
             #search for annotations in the intervall from start (2) to end (3) and count them in score
-            my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );
-           
+            my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );            
             foreach  my $anno ( @{$annotations} ) {
-				
-                  if ( $anno =~ m/gene_(\S+)_([0-9]+)_([0-9]+)/ ) {
+                  if ( $anno =~ m/gene_(\S+)_(\d+)_(\d+)/ ) {
                        my $gene_annotations = $_[0]->{$_[4]}->fetch( int($2), int($3) );                        
                         foreach  my $gene_anno ( @{$gene_annotations} ) {
                               if ($gene_anno=~m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {    
@@ -322,27 +320,12 @@ sub calculate_CRISPR_score {
                   }
             }
             foreach  my $anno ( @{$annotations} ) {
-                  if ( $anno =~ m/gene_(\S+)_[0-9]+_[0-9]+/ ) {
-						my $temp=$1;
-						 if ($weights{"gene_annotation"}) {	
-							$new_score[1]=$new_score[1]+$weights{"gene_annotation"};
-						}else{
-							$new_score[1]++;
-						 }
-						
-                        
-						#print "$temp\t$gene_name\n";
-						if ($temp=~m/$gene_name/) {
-							${ $score{"gene"} }{$temp}++;
-						}		
+                  if ( $anno =~ m/gene_(\S+)_(\d+)_(\d+)/ ) {
+                        $new_score[1]++;
+                        ${ $score{"gene"} }{$1}++;                      
                   } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
-						${ $score{"gene_to_exon"} }{$3}++;
-						if ($weights{"exon_annotation"}) {	
-							$new_score[1]=$new_score[1]+$weights{"exon_annotation"}*5/$2;
-						}else{
-							$new_score[1]=$new_score[1]+5/$2;
-						}
+                        $new_score[1]=$new_score[1]+5/$2;
                         if (exists $score{"transcripts"}) {
                               $score{"transcripts"}=$score{"transcripts"}."_".$1;
                         }else{
@@ -352,37 +335,20 @@ sub calculate_CRISPR_score {
                         
                   } elsif ( $anno =~ m/CpG/ ) {
                         $score{"CpG"}++;
-						if ($weights{"cpg_annotation"}) {	
-							$new_score[1]=$new_score[1]-$weights{"cpg_annotation"};
-						}else{
-							$new_score[1]--;
-						 }
-                  } elsif ( $anno =~ m/CDS::(\S+)::($expression)::(\S+)\_(\d+)_(\d+)$/ ) {
-                        
-						if ($weights{"cds_annotation"}) {	
-							$new_score[1]=$new_score[1]+$weights{"cds_annotation"}*5/$2;
-						}else{
-							$new_score[1]=$new_score[1]+5/$2;
-						}
-						
-		       if($_[1]->{"specific_transcript"} ne "any"){
-			   if ($1 eq $_[1]->{"specific_transcript"}) {
+                        $new_score[1]--;
+                  } elsif ( $anno =~ m/CDS::(\S+)::($expression)::(\S+)\_(\d+)_(\d+)/ ) {
+                        $new_score[1]=$new_score[1]+5/$2;
+                        $score{"CDS"}++;
+                        if($_[1]->{"specific_transcript"} ne "any"){
+                              if ($1 eq $_[1]->{"specific_transcript"}) {
                                     $score{"CDS_1"}++;
                               }
                         } else{
                               $score{"CDS_1"}++;
                         }
-                        if ($_[5] == 1) { # only for FORWARD needed @Flo ist das so gewollt?
-                              $score{"CDS"}++;
-                        }
-                  } elsif ( $anno =~ m/CDS::(\S+)::(\d)::(\S+)\_(\d+)_(\d+)$/ ) {
+                  } elsif ( $anno =~ m/CDS/ ) {
                         $score{"CDS"}++;
-						${ $score{"gene_to_CDS"}}{$3}++;
-						if ($weights{"cds_annotation"}) {	
-							$new_score[1]=$new_score[1]+$weights{"cds_annotation"};
-						}else{
-							$new_score[1]++;
-						}
+                        $new_score[1]++;
                   }
             }
             my $strand=1;
@@ -390,47 +356,45 @@ sub calculate_CRISPR_score {
             my $first_end=0;
             my $second_start=0;
             foreach my $trans (keys %transcripts){
-                  my %temp=%{$transcripts{$trans}};
-				  if(exists $temp{"exon1"}){
+                my %temp=%{$transcripts{$trans}};
+				if(exists $temp{"exon1"}){
 					my @first_temp=split("_",$temp{"exon1"});
 					$first_start=$first_temp[0];
 					$first_end=$first_temp[1];
-				  }
-                  if(exists $temp{"exon2"}){
-											my @second_temp=split("_",$temp{"exon2"});
-											$second_start=$second_temp[0];
-											if ($second_start<$first_start) {
-												$strand=0;
-										   }
-					};
-                  
-                                 #print $_[1]->{"crispri_upstream"}."\t".$_[1]->{"crispri_downstream"}."\n";
-                  if (
-                        $strand==1
-                        && ($first_start+$_[1]->{"crispri_upstream"})>=int($_[2])
-                        && ($first_start-$_[1]->{"crispri_downstream"})<=int($_[2])
-                        ) {
-                          $score{"CRISPRi"}=1;
-                     }elsif(
-                           $strand==0
-                         && ($first_end-$_[1]->{"crispri_upstream"})<=int($_[2])
-                         && ($first_end+$_[1]->{"crispri_downstream"})>=int($_[2])
-                     ){
-                           $score{"CRISPRi"}=1;
-                     }elsif(
-                           $strand==1
-                         && ($first_start-$_[1]->{"crispra_upstream"})<=int($_[2])
-                         && ($first_start-$_[1]->{"crispra_downstream"})>=int($_[2])
-                     ){
-                           $score{"CRISPRa"}=1;
-                     }elsif(
-                           $strand==0
-                         && ($first_end+$_[1]->{"crispra_upstream"})>=int($_[2])
-                         && ($first_end+$_[1]->{"crispra_downstream"})<=int($_[2])
-                     ){
-                           $score{"CRISPRa"}=1;
-                     }
-				 # print  $first_start."\t".int($_[2])."\t".$score{"CRISPRi"}."\n";
+				}
+                if(exists $temp{"exon2"}){
+					my @second_temp=split("_",$temp{"exon2"});
+					$second_start=$second_temp[0];
+					if ($second_start<$first_start) {
+						$strand=0;
+					}
+				};
+                
+				if (
+					  $strand==1
+					  && ($first_start+$_[1]->{"crispri_upstream"})>=int($_[2])
+					  && ($first_start-$_[1]->{"crispri_downstream"})<=int($_[2])
+					  ) {
+						$score{"CRISPRi"}=1;
+				   }elsif(
+						 $strand==0
+					   && ($first_end-$_[1]->{"crispri_upstream"})<=int($_[2])
+					   && ($first_end+$_[1]->{"crispri_downstream"})>=int($_[2])
+				   ){
+						 $score{"CRISPRi"}=1;
+				   }elsif(
+						 $strand==1
+					   && ($first_start-$_[1]->{"crispra_upstream"})<=int($_[2])
+					   && ($first_start-$_[1]->{"crispra_downstream"})>=int($_[2])
+				   ){
+						 $score{"CRISPRa"}=1;
+				   }elsif(
+						 $strand==0
+					   && ($first_end+$_[1]->{"crispra_upstream"})>=int($_[2])
+					   && ($first_end+$_[1]->{"crispra_downstream"})<=int($_[2])
+				   ){
+						 $score{"CRISPRa"}=1;
+				   }
             }
             
             #search for the start and stop coddon in the intervall from start (2) to end (3) with an up/downstream window
@@ -859,7 +823,6 @@ sub filter_library{
     my %genes=();
 	my %genes_from_list=();
 	
-	my %id_for_lib;
     my $gene="";
     my $version=2;
 	open (my $gene_list, "<", $gene_list_file) or die $!;
@@ -915,8 +878,7 @@ sub filter_library{
 		}
 		${${$id_with_info{$line[6]}}{$line[0]}}{"anno_score"}=$line[16];
 		${${$id_with_info{$line[6]}}{$line[0]}}{"spec_score"}=$line[15];
-		${${$id_with_info{$line[6]}}{$line[0]}}{"eff_score"}=$line[17];
-		${${$id_with_info{$line[6]}}{$line[0]}}{"custom_score"}=$line[18];
+		${${$id_with_info{$line[6]}}{$line[0]}}{"custom_score"}=$line[17];
 		${${$id_with_info{$line[6]}}{$line[0]}}{"seq"}=$line[5];
 	}
 	close $libtab;
@@ -957,7 +919,6 @@ sub filter_library{
 					sort { ${$id_with_info{$key}}{$b}->{"anno_score"} <=> ${$id_with_info{$key}}{$a}->{"anno_score"} }
 					sort { ${$id_with_info{$key}}{$b}->{"spec_score"} <=> ${$id_with_info{$key}}{$a}->{"spec_score"} }
 					sort { ${$id_with_info{$key}}{$b}->{"custom_score"} <=> ${$id_with_info{$key}}{$a}->{"custom_score"} }
-					sort { ${$id_with_info{$key}}{$b}->{"eff_score"} <=> ${$id_with_info{$key}}{$a}->{"eff_score"} }
 					keys %{$id_with_info{$key}}
 					){
 					if( 		$count{$key} < $coverage &&
@@ -995,7 +956,7 @@ sub filter_library{
     $lib_name=$lib_name.".$version."."$coverage.".scalar(keys(%id_for_lib));
     open (my $libtab_out, ">", $lib_name.".tab") or die $!;
     open (my $libfa_out, ">", $lib_name.".fasta") or die $!;
-    open (my $libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
+    open ($libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
     my %fasta=();
         while (<$libtab>) {
             @line=split("\t",$_);
@@ -1094,7 +1055,7 @@ sub create_popup {
       my @line          = @{$_[0]};
       my $report        = "";
       my $target        = "";
-      my $match         = $line[17];
+      my $match         = $line[21];
       my $querry        = "";
       my $adjust        = 0;
       my $adjustleft    = 0;
@@ -1102,7 +1063,7 @@ sub create_popup {
       my $end           = 0;
       my $insert        = 0;
       
-      if ($line[20] eq "rc") { #turn and translate the match and querry string if direction is reverse complementary
+      if ($line[24] eq "rc") { #turn and translate the match and querry string if direction is reverse complementary
             $querry = reverse_comp($line[5]);
             $querry =~s/\s+//ig;
             $querry =~s/^(\w{2})\w(\w+)/$1N$2/ig;
@@ -1116,22 +1077,22 @@ sub create_popup {
       
       #search the target-string in database - substr workaround used, because the Bioperl function does not work proper with large numbers
       my $db            = Bio::DB::Fasta->new( $_[1] . '.all.dna.fa', -makeid => \&make_my_id );
-      my @target_name   = split("::", $line[14]);
+      my @target_name   = split("::", $line[18]);
       my $obj           = $db->get_Seq_by_id($target_name[0]);
       if (!defined $obj) { #have to search in whole chromosom
             $db         = Bio::DB::Fasta->new( $_[1] . '.dna.toplevel.fa', -makeid => \&make_my_id );
-            $obj        = $db->get_Seq_by_id($line[14]);
+            $obj        = $db->get_Seq_by_id($line[18]);
       }
-      $start   = $line[15]-$adjust-$_[3]-1;
+      $start   = $line[19]-$adjust-$_[3]-1;
       if ($start < 0 ) {
             $adjustleft = abs($start);
             $start = 0;
       }
       
-      $end     = ($line[16]-$adjust+$_[3]);
+      $end     = ($line[20]-$adjust+$_[3]);
       $target  = substr $obj->seq, $start, $end - $start - 1;
       #count insertions and adjust the end property to display
-      $insert  = $line[17] =~ tr/I/x/;
+      $insert  = $line[21] =~ tr/I/x/;
       
       $report .= '<table>';
       $report .= '<tr><td>Target:</td><td>|'.$start.'*|</td>'.create_popup_string($target, $_[3], 0, 0, $match, 0, 0, $adjustleft).'<td>|'.($end-$insert).'*|</td></tr>';
@@ -1155,7 +1116,7 @@ sub create_popupD {
       my @line          = @{$_[0]};
       my $report        = "";
       my $target        = "";
-      my @match         = split("-", $line[17]);
+      my @match         = split("-", $line[20]);
       my $tmp           = $line[5];
       $tmp              =~s/\s+//ig;
       my @querry        = split("_", $tmp );
@@ -1172,7 +1133,7 @@ sub create_popupD {
       my $match1        = "";
       
       #adjust the first/second querry-string 
-      if ($line[20] eq "rc") {
+      if ($line[23] eq "rc") {
             $querry[0]   = reverse_comp($querry[0]);
             $match0 = $match[0];
             $match1 = $match[1];
@@ -1180,8 +1141,8 @@ sub create_popupD {
             $deletion0   = $match0 =~ tr/D/o/;
             $deletion1   = $match1 =~ tr/D/o/;
             #calc start and end of the target sequence
-            $start       = $line[15] - $_[3] - 1 - $deletion1; # start of the match - the wanted overflow on the left side
-            $end         = $line[16] + $line[21] + length($match[0]) + $_[3] - ($leadingbases*2) - ($deletion0*2); # end of the match + spacer size + length of the matchstring + the wanted overflow on the right side - the count of unspec leadingbases*2 (1st and 2nd)
+            $start       = $line[18] - $_[3] - 1 - $deletion1; # start of the match - the wanted overflow on the left side
+            $end         = $line[19] + $line[24] + length($match[0]) + $_[3] - ($leadingbases*2) - ($deletion0*2); # end of the match + spacer size + length of the matchstring + the wanted overflow on the right side - the count of unspec leadingbases*2 (1st and 2nd)
       }
       else {
             $querry[1]   = reverse_comp($querry[1]);
@@ -1194,8 +1155,8 @@ sub create_popupD {
             $deletion0   = $match0 =~ tr/D/o/;
             $deletion1   = $match1 =~ tr/D/o/;
             #calc start and end of the target sequence
-            $start       = $line[15] - $line[21] - length($match[0]) - $_[3] + $leadingbases - 1 - $deletion1; # swaped of the if-clause and reverted (-/+), but only the leadingbases of the 2nd string count here
-            $end         = $line[16] + $_[3] - $leadingbases - ($deletion0*2); # swaped of the if-clause and reverted (-/+), but only the leadingbases of the 1st string count here
+            $start       = $line[18] - $line[24] - length($match[0]) - $_[3] + $leadingbases - 1 - $deletion1; # swaped of the if-clause and reverted (-/+), but only the leadingbases of the 2nd string count here
+            $end         = $line[19] + $_[3] - $leadingbases - ($deletion0*2); # swaped of the if-clause and reverted (-/+), but only the leadingbases of the 1st string count here
       }
       
       if ($start < 0 ) {
@@ -1206,17 +1167,17 @@ sub create_popupD {
       #count insertions and deletions to adjust the end/start property
       $insert0   = $match0 =~ tr/I/o/;
       $insert1   = $match1 =~ tr/I/o/;
-      for (my $i = 0; $i < ($line[21] - $leadingbases*2 - $deletion0 + $deletion1); $i++){
+      for (my $i = 0; $i < ($line[24] - $leadingbases*2 - $deletion0 + $deletion1); $i++){
             $spacer .= " ";
       }
       
       #search the target-string in database - substr workaround used, because the Bioperl function does not work proper with large numbers
       my $db             = Bio::DB::Fasta->new( $_[1] . '.all.dna.fa', -makeid => \&make_my_id );
-      my @target_name    = split("::", $line[14]);
+      my @target_name    = split("::", $line[17]);
       my $obj            = $db->get_Seq_by_id($target_name[0]);
       if (!defined $obj) { #have to search in whole chromosom
             $db          = Bio::DB::Fasta->new( $_[1] . '.dna.toplevel.fa', -makeid => \&make_my_id );
-            $obj         = $db->get_Seq_by_id($line[14]);
+            $obj         = $db->get_Seq_by_id($line[17]);
       }
       
       $target  = substr $obj->seq, $start, $end - $start - 1;
@@ -1226,8 +1187,8 @@ sub create_popupD {
       $report .= '<tr><td>Query:</td><td></td>'.create_popup_string($querry[0], $_[3], 1, 0, $match[0], 0, 0, $adjustleft).'</tr>';
       $report .= '<tr><td>Matchstring:</td><td></td>'.create_popup_string($match[0], $_[3], 1, 1, $match[0], 0, 0, $adjustleft).'</tr>';
       $report .= '<tr><td>Target:</td><td>|'.$start.'*|</td>'.create_popup_string($target, $_[3], 0, 0, $match[0].$spacer.$match[1], 0, 1, $adjustleft).'<td>|'.($end - 1 - $insert1).'*|</td></tr>';
-      $report .= '<tr><td>Matchstring:</td><td></td>'.create_popup_string($match[1], $_[3], 1, 1, $match[1], (length($match[0]) + int($line[21]) + $insert0 - ($leadingbases*2) - $deletion0 + $deletion1), 0, $adjustleft).'</tr>';
-      $report .= '<tr><td>Query:</td><td></td>'.create_popup_string($querry[1], $_[3], 1, 0, $match[1], (length($match[0]) + int($line[21]) + $insert0 - ($leadingbases*2) - $deletion0 + $deletion1), 0, $adjustleft).'</tr>';
+      $report .= '<tr><td>Matchstring:</td><td></td>'.create_popup_string($match[1], $_[3], 1, 1, $match[1], (length($match[0]) + int($line[24]) + $insert0 - ($leadingbases*2) - $deletion0 + $deletion1), 0, $adjustleft).'</tr>';
+      $report .= '<tr><td>Query:</td><td></td>'.create_popup_string($querry[1], $_[3], 1, 0, $match[1], (length($match[0]) + int($line[24]) + $insert0 - ($leadingbases*2) - $deletion0 + $deletion1), 0, $adjustleft).'</tr>';
       $report .= '</table>';
       $report .= '<hr /><p style="font-size:50%">*start- and endpoint in the target sequence</p>';
       
@@ -1444,7 +1405,7 @@ sub make_a_crispr_library{
       my $fname               = "";
       my $dont_asses_context  = 0;
       if ($something{"draw_html_report"} eq "true" ){
-            open( my $report, ">", "$temp_dir/index.html" ) or die "can not open report file";
+        open( my $report, ">", "$temp_dir/index.html" ) or die "can not open report file";
                     print $report '<!DOCTYPE html>
 										<html lang="enc">
 										<head>
@@ -1455,8 +1416,8 @@ sub make_a_crispr_library{
 		  if(-e "$temp_dir/index.html"){ print $report '<a href="failfile.tab" target="_blank" download="failfile.tab"><input type="button" align="center" value="Download a table of failed ids"></a>';}
 		  print $report '<br><br><a href="libraryfile.tab" target="_blank" download="libraryfile.tab"><input type="button" align="center" value="Download the filtered library table"></a><br><br><a href="library.fasta" target="_blank" download="library.fasta"><input type="button" align="center" value="Download the ready for ordering fasta file"></a></td></tr>';
 		  print $report '<tr><td colspan="2" rowspan="1" style="vertical-align: top;"><embed style="width: 100%; height: 10px;" alt="there should appear a  line" src="/cld/gradientline.svg" type="image/svg+xml"><br></td></tr>';
-                  close $report;
-                  chmod 0755, $temp_dir . "/index.html";
+		close $report;
+		chmod 0755, $temp_dir . "/index.html";
       }
       #################################################################################################################################################################################
       #start the main loop which is looping through the sequence found in the SeqIO object, may be one or many more
@@ -1933,14 +1894,12 @@ sub make_a_crispr_library{
                         }
                         foreach my $key ( keys(%{$CRISPR_hash{$fname}}) ) {
                               my @targets = split(";;", ${ ${ $CRISPR_hash{$fname} } {$key} }{"hits"} );
-                              my $number_off_targets=1;
                               foreach my $hit (@targets){
                                     if ($hit ne "") {
                                           #print $hit."\n";
                                           my @splithit=split("¤¤",$hit);
-                                          if (${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}-((20-(100/${ ${ $CRISPR_hash{$fname} } {$key} }{"length"}*$splithit[4]))/$number_off_targets)>0) {
-                                                ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}-((20-(100/${ ${ $CRISPR_hash{$fname} } {$key} }{"length"}*$splithit[4]))/$number_off_targets);
-                                                $number_off_targets++;
+                                          if (${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}-((20-(100/${ ${ $CRISPR_hash{$fname} } {$key} }{"length"}*$splithit[4])))>0) {
+                                                ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}-((20-(100/${ ${ $CRISPR_hash{$fname} } {$key} }{"length"}*$splithit[4])));
                                           }else{
                                                 ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=0;
                                           }
@@ -1949,15 +1908,12 @@ sub make_a_crispr_library{
                               if(exists(${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"})){
                                     @{${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"}}[0]=${ ${ $CRISPR_hash{$fname} } {$key} }{"score"};
                                     ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}=${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"new_score"};
-									#@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]=@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1]*100/((5*(scalar(keys(%CDS_hash))))+(scalar(keys(%CDS_hash)))+(5*(scalar(keys(%transcripts_hash))))+1);
-                                    #@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]=100*(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2]-(-21))/(40-(-21));
                               }
-                              foreach my $i (0..2){
+                              foreach my $i (0..4){
                                     @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[$i]=round_digits(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[$i],4);
                               }
                               ${ ${ $CRISPR_hash{$fname} } {$key} }{"spec_score"}= @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[0];
                               ${ ${ $CRISPR_hash{$fname} } {$key} }{"anno_score"}= @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[1];
-                              ${ ${ $CRISPR_hash{$fname} } {$key} }{"eff_score"}= @{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}}[2];
                         }
                        
                         #####################################################################################################################################################################
@@ -1966,10 +1922,10 @@ sub make_a_crispr_library{
                               
                               open (my $outfiletab, ">", $temp_dir . "/" . $fname . "_" . "table.tab");
                                     if ($something{"kind"} eq "single") {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tEXTRA_Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\n";
+                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tCustom-Score\tDoench-Score\tXu-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\n";
                                     }
                                     else {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tE-Score\tEXTRA_Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\n";
+                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tDoench-Score\tCustom-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\n";
                                     }
 									if ($something{"purpose"} eq "non-coding") {
 											PRINTLOOP: foreach my $key ( sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} cmp $CRISPR_hash{$fname}{$a}->{"spec_score"} } keys(%{$CRISPR_hash{$fname}}) ) {
@@ -2106,7 +2062,10 @@ sub make_a_crispr_library{
 											  ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"} = join( " ", my @basecomp = find_base_count( $whole_crisp_seq ) ); #store the nucleotide composition as a string object in the hash
 										}
 									}else{									
-										PRINTLOOP: foreach my $key ( sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} } sort { $CRISPR_hash{$fname}{$b}->{"anno_score"} <=> $CRISPR_hash{$fname}{$a}->{"anno_score"} } sort { $CRISPR_hash{$fname}{$b}->{"eff_score"} <=> $CRISPR_hash{$fname}{$a}->{"eff_score"} } sort { $CRISPR_hash{$fname}{$b}->{"exon"} cmp $CRISPR_hash{$fname}{$a}->{"exon"} } keys(%{$CRISPR_hash{$fname}}) ) {
+										PRINTLOOP: foreach my $key (
+																	sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} }
+																	sort { $CRISPR_hash{$fname}{$b}->{"anno_score"} <=> $CRISPR_hash{$fname}{$a}->{"anno_score"} }
+																	sort { $CRISPR_hash{$fname}{$b}->{"exon"} cmp $CRISPR_hash{$fname}{$a}->{"exon"} } keys(%{$CRISPR_hash{$fname}}) ) {
 											  $statistics{$fname}{"Number of successful designs"}++;
 											  my @targets=split(";;",${ ${ $CRISPR_hash{$fname} } {$key} }{"hits"} );
 											  #write the tab-delimited file
@@ -2248,7 +2207,10 @@ sub make_a_crispr_library{
                               if ($something{"out_gff"} eq "true") { 
                                     open(my $gfffile, ">",$temp_dir . "/" . $fname . ".gff" ) or die $!;
                                      print $gfffile "##gff-version 3\n";
-                                          PRINTLOOP: foreach my $key ( sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} } sort { $CRISPR_hash{$fname}{$b}->{"anno_score"} <=> $CRISPR_hash{$fname}{$a}->{"anno_score"} } sort { $CRISPR_hash{$fname}{$b}->{"eff_score"} <=> $CRISPR_hash{$fname}{$a}->{"eff_score"} } sort { $CRISPR_hash{$fname}{$b}->{"exon"} cmp $CRISPR_hash{$fname}{$a}->{"exon"} } keys(%{$CRISPR_hash{$fname}}) ) {
+                                          PRINTLOOP: foreach my $key (
+																	  sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} }
+																	  sort { $CRISPR_hash{$fname}{$b}->{"anno_score"} <=> $CRISPR_hash{$fname}{$a}->{"anno_score"} }
+																	  sort { $CRISPR_hash{$fname}{$b}->{"exon"} cmp $CRISPR_hash{$fname}{$a}->{"exon"} } keys(%{$CRISPR_hash{$fname}}) ) {
                                                 my @locus=split("::",$statistics{$fname}{"seq_location"});
                                                 print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1])."\t";
                                                 print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
@@ -2260,7 +2222,6 @@ sub make_a_crispr_library{
                                                 print $gfffile "id=".$key."; ";
                                                 print $gfffile "spec_score=".${ ${ $CRISPR_hash{$fname} } {$key} }{"spec_score"}."; ";
                                                 print $gfffile "anno_score=".${ ${ $CRISPR_hash{$fname} } {$key} }{"anno_score"}."; ";
-                                                print $gfffile "eff_score=".${ ${ $CRISPR_hash{$fname} } {$key} }{"eff_score"}."; ";
                                                 if ($something{"kind"} eq "single") {
                                                       if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
                                                                   print $gfffile "seq=".reverse_comp(substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,2)."N_".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},3)) . "; ";
@@ -2313,7 +2274,7 @@ sub make_a_crispr_library{
                                                       chomp $line;
                                                       my @line=split("\t",$line);
                                                       print $report '<tr class="entry" id="'.$line[0].'">';
-                                                      foreach my $element (0,5,12,16,19,21){
+                                                      foreach my $element (0,5,12,18,21,23){
                                                             if ($count == 0){
                                                                   if ($element==12) {
                                                                        print $report '<th style="text-align: center; border-bottom: 1px solid black; color: white; padding: 2px; background-color: #2662C3;"> SAE-Score </th>';
@@ -2322,10 +2283,10 @@ sub make_a_crispr_library{
                                                                   }
                                                             }else{
                                                                   my $hittype = "bad";
-                                                                  if ($line[21] == 1) {
+                                                                  if ($line[23] == 1) {
                                                                         $hittype = "good";
                                                                   }
-                                                                  if ($element == 19) {
+                                                                  if ($element == 21) {
                                                                         #create popup for the matchstring-info if the option is chosen, otherwise only the matchstring itself
                                                                         if ($something{"match_info"} eq "true") {
                                                                               my $popup = "";
@@ -2337,8 +2298,8 @@ sub make_a_crispr_library{
                                                                               $line[0] =~ s/\W/_/ig; #for html
                                                                               $line[14] =~ s/\W/_/ig; #for html
                                                                               print $report '<td class="'.$hittype.' main-button" style="text-align: center; word-wrap: break-word; font-family: arial, monospace; color: black; font-size:12px; background-color: white;">'
-                                                                                                .'<div id="dialog_'.$line[0].'__'.$line[16].'__'.$line[19].'" class="dialog" title="Matchstring Info for '.$line[0].' on Target '.$line[14].'">'.$popup.'</div>';
-                                                                              print $report     '<button id="'.$line[0].'__'.$line[16].'__'.$line[19].'" class="opener">Matchstring Info</button>'
+                                                                                                .'<div id="dialog_'.$line[0].'__'.$line[18].'__'.$line[21].'" class="dialog" title="Matchstring Info for '.$line[0].' on Target '.$line[14].'">'.$popup.'</div>';
+                                                                              print $report     '<button id="'.$line[0].'__'.$line[18].'__'.$line[21].'" class="opener">Matchstring Info</button>'
                                                                                           .'</td>';
                                                                         }else {
                                                                               print $report '   <td class="'.$hittype.' main" style="text-align: center; word-wrap: break-word; font-family: arial, monospace; color: black; font-size:12px; background-color: white;">'
@@ -2550,77 +2511,40 @@ sub find_and_print_CRISPRS {
                                           $something{"min_G"} < $flank_array[3] && $something{"max_G"} > $flank_array[3] &&
                                           !($taleseq=~m/TTTTT/) 
                                     ) {
-                                         my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));										
-										my @new_score=(0,0,0,0);
-										#print join("||",(keys %weights))."\n";
-										if (defined $scoring_module) {
-											require $scoring_module;
-											$new_score[3]=calc_score(substr( $seq, ($Gposind-4), 30));
-											if ($weights{"custom_efficacy"}) {												
-												$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
-											}else{
-												$new_score[2]=$new_score[2]+$new_score[3];
-											}	
-										}
-                                          if(exists($Gpos{$Gposind}) && exists($Gpos{$Gposind+1})){
-											if ($weights{"preceedingGG_efficacy"}) {												
-												$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
-											}else{
-												$new_score[2]=$new_score[2]+1
-											}	
-                                          }
-                                          if(exists($Gpos{$Gposind})){
-                                              if ($weights{"startingG_efficacy"}) {												
-												$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
-											}else{
-												$new_score[2]=$new_score[2]+1
-											}
-                                          }
-                                          if(($flank_array[3]+$flank_array[1])>50){
-												if ($weights{"totalgc_efficacy"}) {												
-													$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
-												}else{
-													$new_score[2]=$new_score[2]+1
-												}
-                                          }
-                                          @flank_array = find_base_count( substr( $taleseq, $length-7,6) );
-                                          if(($flank_array[3]+$flank_array[1])>70){
-                                              if ($weights{"seedgc_efficacy"}) {												
-													$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
-												}else{
-													$new_score[2]=$new_score[2]+1
-												}
-                                          }
-                                           if ($weights{"microhom_efficacy"}) {
-												$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Gposind + $length +2 -5 ),5,\$seq);
-										   }else{
-												$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Gposind + $length +2 -5 ),5,\$seq);
-										   }
-                                          ${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
-                                          ${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
-                                          ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
-                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
-                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id,\%weights);
-                                          
-                                          #############################################################################################################################################
-                                          #Statistics
-                                          #############################################################################################################################################
-                                          
-                                          if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
-                                                delete $CRISPR_hash{$name};
-                                                next LENGTHLOOP;
-                                          }
-                                          
-                                          if ($something{"retrieve_recomb_matrix"} eq "true") {
-                                                ${ ${ $CRISPR_hash{$name} }{"homology"} }{"left"} = substr( $whole_seq, ( ${ $CRISPR_hash{$name} }{"start"} - $something{"left_homology"} ), ($something{"left_homology"}) );
-                                                ${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
-                                          }
-                                          
-                                          %{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
-                                          ${ $CRISPR_hash{$name} }{"nucseq"} = $taleseq;
-                                          ${ $CRISPR_hash{$name} }{"strand"} = "plus";
-                                          $count++;
+									my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));										
+									my @new_score=(0,0,0,0,0);
+									#print join("||",(keys %weights))."\n";
+									if (defined $scoring_module) {
+										require $scoring_module;
+										$new_score[2]=calc_score(substr( $seq, ($Gposind-4), 30));
+									}
+									$new_score[3]=calc_doench_score(substr( $seq, ($Gposind-4), 30));
+									$new_score[4]=calc_XU_score(substr( $seq, $Gposind, 30));
+									${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
+									${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
+									${ $CRISPR_hash{$name} }{"length"} = $length + 2;
+									my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+									my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+									my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id,\%weights);
+									
+									#############################################################################################################################################
+									#Statistics
+									#############################################################################################################################################
+									
+									if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+										delete $CRISPR_hash{$name};
+										next LENGTHLOOP;
+									}
+									
+									if ($something{"retrieve_recomb_matrix"} eq "true") {
+										${ ${ $CRISPR_hash{$name} }{"homology"} }{"left"} = substr( $whole_seq, ( ${ $CRISPR_hash{$name} }{"start"} - $something{"left_homology"} ), ($something{"left_homology"}) );
+										${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
+									}
+									
+									%{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
+									${ $CRISPR_hash{$name} }{"nucseq"} = $taleseq;
+									${ $CRISPR_hash{$name} }{"strand"} = "plus";
+									$count++;
                                           #############################################################################################################################################
                                           
                                     } else {
@@ -2666,50 +2590,13 @@ sub find_and_print_CRISPRS {
                                           !($taleseq=~m/AAAAA/) 
                                     ){
                                          my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Cposind + $cut-$start_of_start)/3));
-										my @new_score=(0,0,0,0);
+										my @new_score=(0,0,0,0,0);
 										if (defined $scoring_module) {
 											require $scoring_module;
-											$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
-											if ($weights{"custom_efficacy"}) {												
-												$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
-											}else{
-												$new_score[2]=$new_score[2]+$new_score[3];
-											}	
+											$new_score[2]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
 										}
-                                          if(exists($Cpos{($Cposind + $length + 1)}) && exists($Cpos{($Cposind + $length)})){
-                                               if ($weights{"preceedingGG_efficacy"}) {												
-													$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
-												}else{
-													$new_score[2]=$new_score[2]+1
-												}
-                                          }
-                                          if(exists( $Cpos{($Cposind + $length + 1)}) ){
-                                                if ($weights{"startingG_efficacy"}) {												
-												$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
-											}else{
-												$new_score[2]=$new_score[2]+1
-											}
-                                          }
-                                          if(($flank_array[3]+$flank_array[1])>50){
-                                                if ($weights{"totalgc_efficacy"}) {												
-													$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
-												}else{
-													$new_score[2]=$new_score[2]+1
-												}
-                                          }
-                                          @flank_array = find_base_count( substr( $taleseq, 0,6) );
-                                          if(($flank_array[3]+$flank_array[1])>70){
-                                               if ($weights{"seedgc_efficacy"}) {												
-													$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
-												}else{
-													$new_score[2]=$new_score[2]+1
-												}
-                                          }
-										  if ($weights{"microhom_efficacy"}) {
-											$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + 5 ),5,\$seq);
-										  }else{
-											$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + 5 ),5,\$seq);
-										  }
+										$new_score[3]=calc_doench_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
+										$new_score[4]=calc_XU_score(reverse_comp(substr( $seq, $Cposind-7, 30)));
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
@@ -2797,72 +2684,9 @@ sub find_and_print_CRISPRS {
 												if (defined $scoring_module) {
 													require $scoring_module;
 													$new_score[3]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)))+calc_score(substr( $seq, ( $Cposind + $length + 1 + $spacerlength-4),30));
-													if ($weights{"custom_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"custom_efficacy"}*$new_score[3];
-													}else{
-														$new_score[2]=$new_score[2]+$new_score[3];
-													}	
+																										
 												}
-                                                if(exists($Cpos{( $Cposind + $length + 1 )}) && exists($Cpos{( $Cposind + $length)})){
-                                                    if ($weights{"preceedingGG_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                if(exists($Cpos{( $Cposind + $length + 1 )})){
-                                                   if ($weights{"startingG_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                if(exists($Gpos{( $Cposind + $length + 1 + $spacerlength )}) && exists($Gpos{( $Cposind + $length + 2 + $spacerlength )})){
-                                                    if ($weights{"preceedingGG_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"preceedingGG_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                if(exists($Gpos{( $Cposind + $length + 1 + $spacerlength )})){
-                                                   if ($weights{"startingG_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"startingG_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                if(($flank_array[3]+$flank_array[1])>50){
-                                                    if ($weights{"totalgc_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"totalgc_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                
-                                                @flank_array = find_base_count(substr( $left_taleseq, 0,6));
-                                                if(($flank_array[3]+$flank_array[1])>70){
-                                                    if ($weights{"seedgc_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-                                                
-                                                @flank_array = find_base_count(substr( $right_taleseq, $length-7,6));
-                                                if(($flank_array[3]+$flank_array[1])>70){
-                                                    if ($weights{"seedgc_efficacy"}) {												
-														$new_score[2]=$new_score[2]+$weights{"seedgc_efficacy"};
-													}else{
-														$new_score[2]=$new_score[2]+1
-													}
-                                                }
-												if ($weights{"microhom_efficacy"}) {
-													$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + $length +5 ),5,\$seq); 
-													$new_score[2]=$new_score[2]+$weights{"microhom_efficacy"}*score_micro_homolgy(\%combined,30,( $Cposind + $length +2 + $spacerlength -5 ),5,\$seq);
-												}else{
-													$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +5 ),5,\$seq); 
-													$new_score[2]=$new_score[2]+score_micro_homolgy(\%combined,30,( $Cposind + $length +2 + $spacerlength -5 ),5,\$seq);
-												}
+												$new_score[2]=calc_doench_score(reverse_comp(substr( $seq, $Cposind-3, 30)))+calc_score(substr( $seq, ( $Cposind + $length + 1 + $spacerlength-4),30));
                                                 @{${ $CRISPR_hash{$name} }{"lengthcombo"}}=($length,$spacerlength);
                                                 ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                                 ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length+$spacerlength+$length+2 + 2 ) + $cut;
@@ -3524,7 +3348,80 @@ sub predict_cpg_islands{
         }
 		unlink($filename)
 }
-
+#########################################################################################
+#name:      calc_doench_score
+#function:  Calculate CRISPR Score after Doench et al. 2014 Rational design of highly active sgRNAs for CRISPR-Cas9–mediated gene inactivation
+#input:     < string > #lengt 30 mandatory
+#output:    <numeric double>
+#########################################################################################
+sub calc_doench_score{
+    my $score;
+    if (length($_[0])==30) {
+    my %sing_nuc_hash = ('G2'=>-0.275377128,'A3'=>-0.323887456,'C3'=>0.172128871,'C4'=>-0.100666209,'C5'=>-0.20180294, 
+                    'G5'=>0.245956633,'A6'=>0.036440041,'C6'=>0.098376835,'C7'=>-0.741181291,
+                    'G7'=>-0.393264397,'A12'=>-0.466099015,'A15'=>0.085376945,'C15'=>-0.013813972,
+                    'A16'=>0.272620512,'C16'=>-0.119022648,'T16'=>-0.285944222,'A17'=>0.097454592,
+                    'G17'=>-0.17554617,'C18'=>-0.345795451,'G18'=>-0.678096426,'A19'=>0.22508903,
+                    'C19'=>-0.507794051,'G20'=>-0.417373597,'T20'=>-0.054306959,'G21'=>0.379899366,
+                    'T21'=>-0.090712644,'C22'=>0.057823319,'T22'=>-0.530567296,'T23'=>-0.877007428,
+                    'C24'=>-0.876235846,'G24'=>0.278916259,'T24'=>-0.403102218,'A25'=>-0.077300704,
+                    'C25'=>0.287935617,'T25'=>-0.221637217,'G28'=>-0.689016682,'T28'=>0.117877577,
+                    'C29'=>-0.160445304,'G30'=>0.386342585);
+    my %dinuc_hash = ('GT2'=>-0.625778696,'GC5'=>0.300043317,'AA6'=>-0.834836245,'TA6'=>0.760627772,'GG7'=>-0.490816749,
+                      'GG12'=>-1.516907439,'TA12'=>0.7092612,'TC12'=>0.496298609,'TT12'=>-0.586873894,'GG13'=>-0.334563735,
+                      'GA14'=>0.76384993,'GC14'=>-0.53702517,'TG17'=>-0.798146133,'GG19'=>-0.66680873,'TC19'=>0.353183252,
+                      'CC20'=>0.748072092,'TG20'=>-0.367266772,'AC21'=>0.568209132,'CG21'=>0.329072074,'GA21'=>-0.836456755,
+                      'GG21'=>-0.782207584,'TC22'=>-1.029692957,'CG23'=>0.856197823,'CT23'=>-0.463207679,'AA24'=>-0.579492389,
+                      'AG24'=>0.649075537,'AG25'=>-0.077300704,'CG25'=>0.287935617,'TG25'=>-0.221637217,'GT27'=>0.117877577,
+                      'GG29'=>-0.697740024);
+    my $gc = ( substr($_[0],4,20) =~ tr/GC/GC/);
+    if ($gc < 10){
+        $score=0.597636154+(abs($gc-10)*-0.202625894)
+    }else{
+        $score=0.597636154+(($gc-10)*-0.166587752)
+    }        
+    foreach my $i (0..29){        
+       my $key = substr($_[0],$i,1).($i+1);
+       if ($sing_nuc_hash{$key}) {
+        $score+=$sing_nuc_hash{$key};
+       }
+       if($i<29){
+        $key =substr($_[0],$i,2).($i+1);
+        if ($dinuc_hash{$key}){
+                $score+=$dinuc_hash{$key};
+        }
+       }
+    }
+    return(1/(1+exp(-$score)))
+      #code
+    }else{
+        return(0);
+    }
+}
+#########################################################################################
+#name:      calc_XU_score
+#function:  Calculate CRISPR Score after XU et al. 2015 Sequence determinants of improved CRISPR sgRNA design
+#input:     < string > #lengt 30 mandatory 20 Protspacer followed by 10 including NGG PAM
+#output:    <numeric double>
+#########################################################################################
+sub calc_XU_score{
+    my $score=0;  
+    if (length($_[0])==30) {
+        my %scoring_matrix;
+        @{$scoring_matrix{'A'}}=(0,0,0,0,0.025840846,0,0,0,0.02156311,0.129118902,0.030483786,0.093646913,0,0,0.202820147,0.129158071,0,0,0,0,0,0,0,0,0,0,0,0,0,0);
+        @{$scoring_matrix{'C'}}=(0,0,-0.113781378,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0.23502822,0,-0.125927965,0,0,0,0.179639101,0,0,0,0,0,0);
+        @{$scoring_matrix{'G'}}=(0,0,0,0.080289971,0.072680697,0.100642827,0.082839514,0,0,0,0,0,0,-0.214271553,0,0,0.107523301,0,0.238517854,0.353047311,0,0,0,0,0,0,0,0,0,0);
+        @{$scoring_matrix{'T'}}=(0,0,0,0,0,0,-0.070933894,0,0,0,-0.169986128,0,0,0.073750154,0,0,-0.349240474,-0.145493093,-0.300975354,-0.221752041,-0.155910373,0,0,0,0,0,-0.116646129,0,0,0);
+        my $pos=0;
+        while ( $_[0]=~m/(\w)/g) {
+            $score+=@{$scoring_matrix{$1}}[$pos];
+            $pos++;
+        }
+        return(($score-(-0.5))/(2.5));
+    }else{
+        return(0);
+    }
+}
 
 sub mock{};
 =cut
