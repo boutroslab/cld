@@ -1,0 +1,13 @@
+Revision history for Perl extension Set::IntervalTree.
+
+0.01  Mon Jul 12 15:58:33 2010
+	- original version; created by h2xs 1.23 with options
+		-n Set::IntervalTree -F -I. interval_tree.h
+
+0.02  Mon Apr 29 11:03:00 2011
+	- change to half-closed intervals
+	- add remove, remove_window, fetch_window methods
+	
+0.10 Mon Feb 10 15:00:00 2013
+	- added a new function to save the Interval-Trees in a binary file
+	- added a new function to load the Interval-Trees out of a binary file

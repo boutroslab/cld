@@ -3425,51 +3425,6 @@ sub calc_XU_score{
 
 sub mock{};
 =cut
-=head1 AUTHOR
-
-Florian Heigwer, C<< <f.heigwer at dkfz.de> >>
-
-=head1 BUGS
-
-Please report any bugs or feature requests to C<bug-etools-ecrisp at rt.cpan.org>, or through
-the web interface at L<http://rt.cpan.org/NoAuth/ReportBug.html?Queue=ETOOLS-ECRISP>.  I will be notified, and then you'll
-automatically be notified of progress on your bug as I make changes.
-
-
-
-GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG
-=head1 SUPPORT
-
-You can find documentation for this module with the perldoc command.
-
-    perldoc ETOOLS::ECRISP
-
-
-You can also look for information at:
-
-=over 4
-
-=item * RT: CPAN's request tracker (report bugs here)
-
-L<http://rt.cpan.org/NoAuth/Bugs.html?Dist=ETOOLS-ECRISP>
-
-=item * AnnoCPAN: Annotated CPAN documentation
-
-L<http://annocpan.org/dist/ETOOLS-ECRISP>
-
-=item * CPAN Ratings
-
-L<http://cpanratings.perl.org/d/ETOOLS-ECRISP>
-
-=item * Search CPAN
-
-L<http://search.cpan.org/dist/ETOOLS-ECRISP/>
-
-=back
-
-
-=head1 ACKNOWLEDGEMENTS
-
 
 =head1 LICENSE AND COPYRIGHT
 

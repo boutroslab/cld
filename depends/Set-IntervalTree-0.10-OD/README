@@ -1,0 +1,22 @@
+Set-IntervalTree version 0.03
+
+INSTALLATION
+
+To install this module type the following:
+
+   perl Makefile.PL
+   make
+   make test
+   make install
+
+DEPENDENCIES
+
+This module requires no external CPAN module dependencies.
+
+COPYRIGHT AND LICENCE
+
+Copyright (C) 2010 by Ben Booth
+
+This library is free software; you can redistribute it and/or modify
+it under the same terms as Perl itself, either Perl version 5.10.1 or,
+at your option, any later version of Perl 5 you may have available.
