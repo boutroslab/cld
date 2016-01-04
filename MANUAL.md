@@ -32,6 +32,7 @@ Library design
  	consumption to be approximately 1 h wall-time for an 8-core cpu node.
  	
 In the following table every parameters as can be defined in the parameter-file is explained in more detail.
+
 | parameter | explanations | type/value |
 | ------------- | ------------- |
 | purpose_exclusive	|	determins if the pupose exclusive choice should effect the design filtering criteria	|	boolean (true or false) |
