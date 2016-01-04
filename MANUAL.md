@@ -1,4 +1,4 @@
-cld can be called either with “--version”, printing its version number and copyrights, 
+#cld can be called either with “--version”, printing its version number and copyrights, 
 “--help” printing a more elusive help documentation and with “--task”. 
 
 EXAMPLE to execute from the path containing all needed files:
@@ -32,21 +32,14 @@ Library design
  	consumption to be approximately 1 h wall-time for an 8-core cpu node.
  	
 In the following table every parameters as can be defined in the parameter-file is explained in more detail.
-
+#####
 | parameter | explanations | type/value |
-
 | ------------- | ------------- |
-
 | purpose_exclusive	|	determins if the pupose exclusive choice should effect the design filtering criteria	|	boolean (true or false) |
-
 | min_length	|	minimum length of the protospacer ( 5' sequence befor the PAM)	|	numeric |
-
 | max_length	|	minimum length of the protospacer ( 5' sequence befor the PAM)	|	numeric |
-
 | min_G	|	minimum total G content	|	numeric |
-
 | max_G	|	maximum total G content	|	numeric |
-
 | min_A	|	minimum total A content	|	numeric |
 | max_A	|	maximum total A content	|	numeric |
 | min_C	|	minimum total C content	|	numeric |
