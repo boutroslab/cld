@@ -2450,11 +2450,13 @@ sub find_and_print_CRISPRS {
             push @cuts, $cut;
             $cut = $cut + $cutnumber;
       }
+	  
       #################################################################################################################################################################################
       # cut the sequence into equal peaces, so that each forked child can work on one part (paralell!)
       #################################################################################################################################################################################
       
       foreach $cut (@cuts) {
+		
             $pm->start and next;
             my $seq = substr( $whole_seq, $cut, $cutnumber );
             my %CRISPR_hash = ();
@@ -2516,10 +2518,10 @@ sub find_and_print_CRISPRS {
 									#print join("||",(keys %weights))."\n";
 									if (defined $scoring_module) {
 										require $scoring_module;
-										$new_score[2]=calc_score(substr( $seq, ($Gposind-4), 30));
+										$new_score[2]=0;#calc_score(substr( $seq, ($Gposind-4), 30));
 									}
 									$new_score[3]=calc_doench_score(substr( $seq, ($Gposind-4), 30));
-									$new_score[4]=calc_XU_score(substr( $seq, $Gposind, 30));
+									$new_score[4]=0;#calc_XU_score(substr( $seq, $Gposind, 30));
 									${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
 									${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
 									${ $CRISPR_hash{$name} }{"length"} = $length + 2;
@@ -2593,10 +2595,10 @@ sub find_and_print_CRISPRS {
 										my @new_score=(0,0,0,0,0);
 										if (defined $scoring_module) {
 											require $scoring_module;
-											$new_score[2]=calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
+											$new_score[2]=0;#calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
 										}
 										$new_score[3]=calc_doench_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
-										$new_score[4]=calc_XU_score(reverse_comp(substr( $seq, $Cposind-7, 30)));
+										$new_score[4]=0;#calc_XU_score(reverse_comp(substr( $seq, $Cposind-7, 30)));
                                           ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
                                           ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length + 2 ) + $cut;
                                           ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
