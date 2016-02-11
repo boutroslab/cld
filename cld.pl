@@ -4255,13 +4255,20 @@ sub find_and_print_CRISPRS {
             push @cuts, $cut;
             $cut = $cut + $cutnumber;
       }
+	  
       #################################################################################################################################################################################
       # cut the sequence into equal peaces, so that each forked child can work on one part (paralell!)
       #################################################################################################################################################################################
       
       foreach $cut (@cuts) {
+<<<<<<< HEAD
             my $seq = substr( $whole_seq, $cut, $cutnumber );  
             $pm->start and next;            
+=======
+		
+            $pm->start and next;
+            my $seq = substr( $whole_seq, $cut, $cutnumber );
+>>>>>>> bc66ebcee2ec909f6b0cf2dea6aa3a3f83e20269
             my %CRISPR_hash = ();
             
             ###########################################################################################################################################################################
@@ -4291,6 +4298,7 @@ sub find_and_print_CRISPRS {
                                           $something{"min_G"} < $flank_array[3] && $something{"max_G"} > $flank_array[3] &&
                                           !($crisprseq=~m/TTTTT/) 
                                     ) {
+<<<<<<< HEAD
                                           my $name = $seq_obj->display_id;
                                           $name .= "_" . $count . "_" . $cut;
                                           my @new_score=(0,0,0,0,0);
@@ -4335,6 +4343,100 @@ sub find_and_print_CRISPRS {
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
                                           my %score = calculate_CRISPR_score(\%trees, \%something, $start,  $end , $chrom, 1, \@new_score,$gene_id);
+=======
+									my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Gposind + $cut-$start_of_start)/3));										
+									my @new_score=(0,0,0,0,0);
+									#print join("||",(keys %weights))."\n";
+									if (defined $scoring_module) {
+										require $scoring_module;
+										$new_score[2]=0;#calc_score(substr( $seq, ($Gposind-4), 30));
+									}
+									$new_score[3]=calc_doench_score(substr( $seq, ($Gposind-4), 30));
+									$new_score[4]=0;#calc_XU_score(substr( $seq, $Gposind, 30));
+									${ $CRISPR_hash{$name} }{"start"} = ($Gposind) + $cut;
+									${ $CRISPR_hash{$name} }{"end"} = ( $Gposind + $length + 2 ) + $cut;
+									${ $CRISPR_hash{$name} }{"length"} = $length + 2;
+									my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+									my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+									my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score , $gene_id,\%weights);
+									
+									#############################################################################################################################################
+									#Statistics
+									#############################################################################################################################################
+									
+									if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+										delete $CRISPR_hash{$name};
+										next LENGTHLOOP;
+									}
+									
+									if ($something{"retrieve_recomb_matrix"} eq "true") {
+										${ ${ $CRISPR_hash{$name} }{"homology"} }{"left"} = substr( $whole_seq, ( ${ $CRISPR_hash{$name} }{"start"} - $something{"left_homology"} ), ($something{"left_homology"}) );
+										${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
+									}
+									
+									%{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
+									${ $CRISPR_hash{$name} }{"nucseq"} = $taleseq;
+									${ $CRISPR_hash{$name} }{"strand"} = "plus";
+									$count++;
+                                          #############################################################################################################################################
+                                          
+                                    } else {
+                                          $tempstatistics{"Number of designs excluded because their nucleotide composition was too invariable or contained TTTTT"}++;
+                                          next LENGTHLOOP;
+                                    }
+                              }
+                        }
+                  }
+                  
+                  #####################################################################################################################################################################
+                  # Backward Sequence Calculations
+                  #####################################################################################################################################################################
+                  
+                  if ($something{"preceding"} eq "A") {
+                        %dont_care_ind=%Tpos;
+                  } elsif($something{"preceding"} eq "G"){
+                        %dont_care_ind=%Cpos;
+                  } elsif($something{"preceding"} eq "C"){
+                        %dont_care_ind=%Gpos;
+                  } elsif($something{"preceding"} eq "T"){
+                        %dont_care_ind=%Apos;
+                  } else{
+                        %dont_care_ind=(%Gpos,%Tpos,%Cpos,%Apos);
+                  }
+                  if ($something{"PAM"} eq "NAG") {
+                        %PAMindex=%Tpos;
+                  } elsif ($something{"PAM"} eq "NGG") {
+                        %PAMindex=%Cpos;
+                  } else{
+                        %PAMindex=(%Tpos,%Cpos);
+                  }
+                  POSLOOP: foreach my $Cposind ( sort( keys(%Cpos) ) ) {
+                        LENGTHLOOP: foreach my $length ( ($something{"min_length"}+1) .. ($something{"max_length"}+1) ) {
+                              if ( exists $PAMindex{ ( $Cposind + 1 ) } && exists $dont_care_ind{ ( $Cposind + $length + 1 ) } ) {
+                                    my $taleseq = substr( $seq, $Cposind, $length + 2 );
+                                    my @flank_array = find_base_count( $taleseq );
+                                    $tempstatistics{"Total number of possible designs"}++;
+                                    if (  $something{"min_A"} < $flank_array[0] && $something{"max_A"} > $flank_array[0] &&
+                                          $something{"min_C"} < $flank_array[1] && $something{"max_C"} > $flank_array[1] &&
+                                          $something{"min_T"} < $flank_array[2] && $something{"max_T"} > $flank_array[2] &&
+                                          $something{"min_G"} < $flank_array[3] && $something{"max_G"} > $flank_array[3] &&
+                                          !($taleseq=~m/AAAAA/) 
+                                    ){
+                                         my $name = ($seq_obj->display_id)."_" . $count . "_" . $cut. "." .(int(abs($Cposind + $cut-$start_of_start)/3));
+										my @new_score=(0,0,0,0,0);
+										if (defined $scoring_module) {
+											require $scoring_module;
+											$new_score[2]=0;#calc_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
+										}
+										$new_score[3]=calc_doench_score(reverse_comp(substr( $seq, $Cposind-3, 30)));
+										$new_score[4]=0;#calc_XU_score(reverse_comp(substr( $seq, $Cposind-7, 30)));
+                                          ${ $CRISPR_hash{$name} }{"start"} = ($Cposind) + $cut;
+                                          ${ $CRISPR_hash{$name} }{"end"} = ( $Cposind + $length + 2 ) + $cut;
+                                          ${ $CRISPR_hash{$name} }{"length"} = $length + 2;
+                                          my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
+                                          my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
+                                          my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0,\@new_score,$gene_id,\%weights);
+>>>>>>> bc66ebcee2ec909f6b0cf2dea6aa3a3f83e20269
                                           
                                           #############################################################################################################################################
                                           #Statistics
