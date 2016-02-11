@@ -1,4 +1,4 @@
-![](https://github.com/boutroslab/cld/Logo_CLD-01.png)
+![](https://github.com/boutroslab/cld/find/master/logo.png)
 
 #CRISPR Library Designer (CLD): a software for the multispecies design of sgRNA libraries
 
