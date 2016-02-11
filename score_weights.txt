@@ -1,6 +1,0 @@
-gene_annotation=1
-exon_annotation=0.01735352
-cds_annotation=0.01195317
-cpg_annotation=1
-start_annotation=-0.35938398
-stop_annotation=-0.78569717
