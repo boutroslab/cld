@@ -240,8 +240,7 @@ Options:
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
 		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file.
 			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
-			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
-
+			
 		 library_assembly 				to format a library from an identification folder.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
@@ -254,11 +253,11 @@ Options:
 		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
 								   				default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G
-								   				 may be "true" or "false" default :true.	    
+								   				 may be 1 or 0 default :1.	    
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
 								    			this folder must be prepared by --task= target_ident
 			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
-													-an be : true or false (default:true)
+													-an be : 1 or 0 (default:0)
 
 		 end_to_end 							to perform and end-to-end analysis from target identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -273,10 +272,9 @@ Options:
 								    			default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
 			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
-													-can be : true or false (default:true)
+													-can be : 1 or 0 (default:1)
 			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
-			--scoring-weights=<path/to/dir>		- the path and filename of a file defining a weight matrix with multipliers for the different scoring aspects
-
+			
 	    --version							- Show version.
 	    --help								- Show this message.
 };
@@ -570,8 +568,8 @@ if ($something{"GUI"}) {
 				#general sgRNA properties											;#
 				#$something{"preceding"}="any"										;#
 				#$something{"PAM"}="NGG"												;#
-				$something{"min_length"}=21											;#
-				$something{"max_length"}=21											;#
+				$something{"min_length"}=20											;#
+				$something{"max_length"}=20											;#
 				$something{"min_G"}=1												;#
 				$something{"max_G"}=90												;#
 				$something{"min_A"}=1												;#
@@ -636,7 +634,7 @@ if ($something{"GUI"}) {
 				$something{"5_adapt"}="CTGAGCTCATAGAAGACCTCACC"                     ;#
 				$something{"3_adapt"}="TTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG";#
 				$something{"correct_5_prime_G"}=0                                         ;#
-				$something{"cover_many_transcripts"}=1                             ;#
+				$something{"cover_many_transcripts"}=0                             ;#
 				$something{"sort_by_rank"}=0;
 				$something{"working_path"}=".";
 				$something{"custom_score"}=$something{"default_custom_score"}='
@@ -1678,10 +1676,10 @@ if ($something{"GUI"}) {
 																	defined($something{"total_lib_size"}) ? $something{"total_lib_size"} : 200000, 
 																	defined($something{"5_adapt"}) ? $something{"5_adapt"} : "CTGAGCTCATAGAAGACCTCACC", 
 																	defined($something{"3_adapt"}) ? $something{"3_adapt"} : "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG",
-																	defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : "true", 
+																	defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 																	$something{"working_path"},
 																	$something{"gene_list_file_name"},
-																	defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : "true"
+																	defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
 																	);
                                                         }
                                                     });
@@ -1764,7 +1762,7 @@ if ($something{"GUI"}) {
 			if(defined($something{"total_lib_size"})	and	$something{"total_lib_size"}	=~m/([^\d]+)/g){ die "The total library size must be specified as an integer. Your input is not integer as it contains: $1." }
 			if(defined($something{"5_adapt"})		and	$something{"5_adapt"}		=~m/([^ACGT]+)/g){ die "The 5' adapter sequence must contain only ACGT charcters. Your input contains: $1." }
 			if(defined($something{"3_adapt"})		and	$something{"3_adapt"}		=~m/([^ACGT]+)/g){ die "The 3' adapter sequence must contain only ACGT charcters. Your input contains: $1." }
-			if(defined($something{"correct_5_prime_G"})	and	$something{"correct_5_prime_G"} ne "true" and $something{"correct_5_prime_G"} ne "false" ){ die "Correcting the 5' basepair to a G must be true or false" }    
+			if(defined($something{"correct_5_prime_G"})	and	$something{"correct_5_prime_G"} ne 1 and $something{"correct_5_prime_G"} ne 0 ){ die "Correcting the 5' basepair to a G must be 1 or 0" }    
 			
 			filter_library(		
 					make_a_crispr_library(
@@ -1777,10 +1775,10 @@ if ($something{"GUI"}) {
 					defined($something{"total_lib_size"}) ? $something{"total_lib_size"} : 2000, 
 					defined($something{"5_adapt"}) ? $something{"5_adapt"} : "CTGAGCTCATAGAAGACCTCACC", 
 					defined($something{"3_adapt"}) ? $something{"3_adapt"} : "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG",
-					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : "true", 
+					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 					$something{"working_path"},
 					$something{"gene_list_file_name"},
-					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : "true"
+					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
 				);
 		}elsif($something{"task"} eq "library_assembly"){
 			if(!defined($something{"gene_list_file_name"})){
@@ -1795,7 +1793,7 @@ if ($something{"GUI"}) {
 			if(defined($something{"total_lib_size"})	and	$something{"total_lib_size"}	=~m/([^\d]+)/g){ die "The total library size must be specified as an integer. Your input is not integer as it contains: $1." }
 			if(defined($something{"5_adapt"})		and	$something{"5_adapt"}		=~m/([^ACGT]+)/g){ die "The 5' adapter sequence must contain only ACGT charcters. Your input contains: $1." }
 			if(defined($something{"3_adapt"})		and	$something{"3_adapt"}		=~m/([^ACGT]+)/g){ die "The 3' adapter sequence must contain only ACGT charcters. Your input contains: $1." }
-			if(defined($something{"correct_5_prime_G"})	and	$something{"correct_5_prime_G"} ne "true" and $something{"correct_5_prime_G"} ne "false" ){ die "Correcting the 5' basepair to a G must be true or false" }    
+			if(defined($something{"correct_5_prime_G"})	and	$something{"correct_5_prime_G"} ne 1 and $something{"correct_5_prime_G"} ne 0 ){ die "Correcting the 5' basepair to a G must be 1 or 0" }    
 			
 			filter_library(
 					$something{"input_folder"},#"Thu_Dec_4_17:28:18_20141417710498",
@@ -1804,10 +1802,10 @@ if ($something{"GUI"}) {
 					defined($something{"total_lib_size"}) ? $something{"total_lib_size"} : 200000, 
 					defined($something{"5_adapt"}) ? $something{"5_adapt"} : "CTGAGCTCATAGAAGACCTCACC", 
 					defined($something{"3_adapt"}) ? $something{"3_adapt"} : "GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG",
-					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : "true", 
+					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 					$something{"working_path"},
 					$something{"gene_list_file_name"},
-					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : "true"
+					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
 				   );
 		}else{
 			die "Some parameters are missing!\nOne of the four options make_database , target_ident , end_to_end or library assembly must be set.\n";
@@ -3343,7 +3341,7 @@ sub make_a_crispr_library{
                                                                        if ($namestuff eq "" && $something{"ignore_intergenic"} ==1) {                                                                              
                                                                         }elsif($namestuff ne ""){
                                                                               ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$namestuff."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
-                                                                        }elsif($namestuff eq "" && $something{"ignore_intergenic"} eq "false"){
+                                                                        }elsif($namestuff eq "" && $something{"ignore_intergenic"} eq 0){
                                                                               ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$line[2]."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
                                                                         }
                                                                   }else{
@@ -3453,10 +3451,10 @@ sub make_a_crispr_library{
                                                                                           #$startcoordinate=$2;
                                                                                     } 
                                                                               }
-																			  if ($namestuff eq "" && $something{"ignore_intergenic"}=="true") {                                                                              
+																			  if ($namestuff eq "" && $something{"ignore_intergenic"}==1) {                                                                              
 																				}elsif($namestuff ne ""){
 																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=";;".$namestuff."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction."§§".$spacer;
-																				}elsif($namestuff eq "" && $something{"ignore_intergenic"}=="false"){
+																				}elsif($namestuff eq "" && $something{"ignore_intergenic"}==0){
 																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=";;".$line[2]."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction."§§".$spacer;
 																				}
                                                                               $was_hit=1;
