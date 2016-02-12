@@ -134,8 +134,8 @@ In the following table every parameters as can be defined in the parameter-file 
 | CpG_exclusive | defines if the sgRNA is allowed to target a region within a CpG island | boolean (1 or 0) |
 | specific_exon | defines if a specific exon number is to be targeted | numeric |
 | retrieve_recomb_matrix | defines if the sequences for homology arms should be computed and reported | boolean (1 or 0) |
-| bowtie_version | defines which version of bowtie or blast should be used for off-target analysis. Bowtie is more sensitive to mismatches of single designs, and bowtie2 is optimized for paired alignments of sequences. Here Blast tends to be the most sensitive towards less homologous sequences. In case of all aligner only full-length alognments are counted valid. | bowtie, bowtie2 or blast |
-| offtargetdb | defines if off-targets should be searched in genomic sequences, gene annotated sequences or exons of protein coding sequences | genomeDNA, gDNA or cDNA |
+| bowtie_version | defines which version of bowtie or blast should be used for off-target analysis. Bowtie is more sensitive to mismatches of single designs, and bowtie2 is optimized for paired alignments of sequences. Here Blast tends to be the most sensitive towards less homologous sequences. For all mapping algorithms only full-length alignments are counted. | bowtie, bowtie2 or blast |
+| offtargetdb | defines if off-targets should be searched in genomic sequences, sequences of annotated genes or exons of protein coding sequences | genomeDNA, gDNA or cDNA |
 | off-targets-allowed | defines how many off-targets per design are tolerated before it is excluded from the report | numeric |
 | unspecific_leading_bases | defines the number of 5' base pairs of the target site to be ignored for the off-target mapping | numeric |
 | edit_distance_allowed | defines the edit distance (sum of all mismatch or INDEL positions) allowed during alignment to be still counted as off-target | numeric |
@@ -145,15 +145,15 @@ In the following table every parameters as can be defined in the parameter-file 
 | out_gff | defines if a gff should be generated  | boolean (1 or 0) |
 | specific_transcript | defines if only a specific transcript (provided as an ENSEMBL TR ID) should be targeted. This is not applicable if more than one gene is searched. | ENSEMBL transcript ID or any |
 | match_info | defines if a detailed alignment information should be printed on any sgRNA mapping | boolean (1 or 0) |
-| draw_html_report | defines if an html report should  be created | boolean (1 or 0) |
+| draw_html_report | defines if an html report should be created | boolean (1 or 0) |
 | working_path | defines if an unix path to the results should be used, else results are created in the current working directory (.) | e.g. /data/workdir/ |
-| databasepath | defines if an unix path to the CLD formatted databases containing folder should be generated | e.g. /data/databases/ |
+| databasepath | defines if an unix path to the folder containing CLD formatted databases should be generated | e.g. /data/databases/ |
 | ref_organism | defines the reference organism as given in the name of the database and the sub-directories e.g. if the organisms is homo_sapiens, the database needs to have the prefix homo_sapiens | e.g. homo_sapiens , dmel |
-| data_type | define if the input file contains Official Gene Symbols ENSEMBL IDs or genomic coordinates. Coordinates need to be given as ID,chromosome (Ensembl_type),Start, End . Coordinate data need to be tab separated and different entries need to be newline separated | ensemble_acc, gene_symbol or coordinates |
+| data_type | defines if the input file contains official gene symbols, ENSEMBL IDs or genomic coordinates. Coordinates need to be given as ID, chromosome (Ensembl_type), start, end. Coordinate data need to be tab separated and different entries need to be newline separated | should be either ensemble_acc, gene_symbol or coordinates |
 | ignore_missing_id | defines if the program should die if IDs are faced, that can not be found in the currently used database | boolean (1 or 0) |
-| kind | defines if sgRNA target sites should be found ina single or paired mode (suitable for the paired nickase or FokI paired nuclease approach) | single or double |
-| exclude_overlapping_genes | defines if sgRNA designs targeting multiple overlapping genes/antisense transcripts should be excluded | boolean (1 or 0) |
-| sort_by_rank | defines if sgRNAs should be ranked additionally by an on-target scoring | boolean (1 or 0) |
-| scores | defines the score to be used. These score refer to the scheme brought forward by Xu et al. 2015, and Doench et al. 2014. However they are only defined for 20 nt Protospacer adjacent to an NGG PAM. | xu_score, doench_old or custom |
-| custom_score | defines a custom scoring function in perl code. the function needs to be unnamed and dependend on sequence information of the 30mer described in Doench et al.. Results of the function need to be numeric. | string in perl language defining a anonymous funtion, which acts on the Doench 30mer |
-| cover_many_transcripts | defines if priority in sgRNA choice for the final library should be given on maximum coverage of all transcripts of the gene. All other scores will be ignored but shown in the resulting tables. | boolean (1 or 0) |
+| kind | defines if sgRNA target sites should be found in a single or paired mode (suitable for the paired nickase or FokI paired nuclease approach) | single or double |
+| exclude_overlapping_genes | defines if sgRNA designs targeting multiple overlapping genes/ antisense transcripts should be excluded | boolean (1 or 0) |
+| sort_by_rank | defines if sgRNAs should be ranked additionallly by an on-target score | boolean (1 or 0) |
+| scores | defines the on-target score to be used. The preset scores are derived from the algorithms proposed by  Xu et al. 2015 and Doench et al. 2014. However they are only defined for a 20 nt protospacer adjacent to a NGG PAM. | xu_score, doench_old or custom |
+| custom_score | defines a custom scoring function in perl code. the function needs to be unnamed and dependent on sequence information of the 30mer described in Doench et al.. Results of the function need to be numeric. | string in perl language defining a anonymous funtion, which acts on the Doench 30mer |
+| cover_many_transcripts | defines if priority in sgRNA choice for the final library should be given on maximum coverage of all transcripts of a gene. All other scores will be ignored but shown in the resulting tables. | boolean (1 or 0) |
