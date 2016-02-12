@@ -6,23 +6,27 @@ ABSTRACT
 
 Genetic screens using CRISPR/Cas9 are a powerful method for the functional analysis of genomes. Here we provide a fully integrated bioinformatics workflow for the design of custom single guide (sg) RNA libraries for a broad spectrum of organisms, termed CRISPR library designer (CLD). CLD can predict a high fraction of functional sgRNAs. An analysis on parameters that determine on-target efficiency of sgRNAs indicates that their prediction by CLD gives valuable insights into their efficiency in experiment. CLD enables the design of custom scalable, high-coverage sgRNA libraries for many species.
 
-Quick-Start:
+**Quick-Start:**
 
-On Mac: If you have'nt, install Xquartz from http://www.xquartz.org/
+On Mac: If you haven't, install Xquartz from http://www.xquartz.org/
 
 When logging in remotely: log into your remote server by ssh -X
 
-Download the GUI application according to your Operating system and unzip it.
+Download CLD_GUI_Mac.zip or CLD_GUI_Ubuntu.zip according to your Operating system and unzip it.
 
-Double click the application or open it by ./CLD in the Terminal.
+Double click on the application or open it by ./CLD in the Terminal.
 
 Download the database for your organism of interest.
 
-Enter its name in the field below.
+Enter its name in the reference organism field on the start page.
 
-Enter a gene list and go to the Parameter Tab to the End and Start your analysis.
+Enter a list of gene identifiers in the "Gene List" tab and go to the "Design Parameter" tab to set your parameters.
 
-Command-Line-Start:
+Go to the "Start Analysis" tab to start sgRNA search.
+
+The results will be created in the selected output directory ("Input/Output" tab).
+
+**Command-Line-Start:**
 
 cld can be called either with “--version”, printing its version number and copyrights, 
 “--help” printing a more elusive help documentation and with “--task”. 
