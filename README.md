@@ -41,7 +41,7 @@ library design.
 Database creation is called using the “--task=make_database” command 
 	giving the organism name of interest, as it is denoted in ENSEMBLs ftp folder structure
 	e.g. homo_sapiens, and the rsync url to the current ftp server of ENSEMBL, examples 
- 	can be found when cld  --help is called. After calling this function CRISPR will 
+ 	can be found when cld  --help is called. After calling this function CLD will 
  	automatically download the latest toplevel FASTA, GFF and GTF files for the organism 
  	of interest and compile a database containing bowtie indexes, mygff files and 
  	reformatted sequence files. If not enough computing power is available to the user, 
@@ -52,7 +52,7 @@ Library design can either be done in two steps: “cld
  	to separate the two steps for example in order to only identify target sites without 
  	compiling a clonable library. 
  	Else “cld  --task=end_to_end” which automatically will perform the steps mentioned before 
- 	after another and present the end-result in a user defined output folder. 
+ 	and present the end-result in a user defined output folder. 
  	For reasons of manageability for high throughput design, output files are kept 
  	as simple and standardised as possible. However a genome wide library targeting 
  	the human genome quickly spans several GB depending on how strict the parameters 
