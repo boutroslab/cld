@@ -64,7 +64,6 @@ my $max_parallel= my $parallel_number =$procs->max_online;
 my $aligner_path="";
 if(-d $ENV{PAR_TEMP}."/inc/"){
 	$aligner_path=$ENV{PAR_TEMP}."/inc/bowtie_progs/";
-    system("find $aligner_path ");
 }
 $| = 1;
 
@@ -3161,10 +3160,10 @@ sub make_a_crispr_library{
       foreach my $fname ( @fname_array ) {
             my $json = read_file( $temp_dir . "/" .$fname. '.json', { binmode => ':raw' } );
             %CRISPR_hash = ( %CRISPR_hash, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $fname. ".json";
+            unlink $temp_dir . "/" . $fname. ".json";
             $json = read_file( $temp_dir . "/" . $fname. 'stats.json', { binmode => ':raw' } );
             %statistics=( %statistics, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $fname. "stats.json";
+            unlink $temp_dir . "/" . $fname. "stats.json";
       }
 	  if ($something{"PAM"} eq "any") {
 			if ($something{"textpam"}=~m/([^ACGTUKMSWRYBVDHN]+)/g) {
@@ -3355,7 +3354,7 @@ sub make_a_crispr_library{
                                     }
                               close $bowtie;
                               
-                              #unlink $temp_dir . "/temp_out.bwt";
+                              unlink $temp_dir . "/temp_out.bwt";
                               if ( $something{"sec_off_target"} ==1 ) { #ckeck if this is wanted
                                     ###############################################################################################################################################################
                                     
@@ -3378,9 +3377,9 @@ sub make_a_crispr_library{
                                                 }
                                           }
                                     close $bowtie;
-                                    #unlink $temp_dir . "/temp_out.bwt";
+                                    unlink $temp_dir . "/temp_out.bwt";
                               }
-                              #unlink $temp_dir . "/temp_CRISPRS.fasta";
+                              unlink $temp_dir . "/temp_CRISPRS.fasta";
                         }else{
                               
                               #####################################################################################################################################################################
@@ -3500,9 +3499,9 @@ sub make_a_crispr_library{
                                           }
                                     }
                               close $bowtie;
-                              #unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
-                              #unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
-                              #unlink $temp_dir . "/temp_out.bwt";
+                              unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
+                              unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
+                              unlink $temp_dir . "/temp_out.bwt";
                               #####################################################################################################################################################################
                               #  if ( exists $something{"sec_off_target"} ) needed for double! @Florian
                               #####################################################################################################################################################################
@@ -4012,7 +4011,7 @@ sub make_a_crispr_library{
                               # ZIP the stuff
                               #####################################################################################################################################################################
                             
-                              #unlink $temp_dir . "/tempfile.fasta";
+                              unlink $temp_dir . "/tempfile.fasta";
                               my $zip    = Archive::Zip->new();
                               my $member = "";
                               if ( $something{"out_gff"} ==1) { $member = $zip->addFile( $temp_dir . "/" . $fname . ".gff", $fname . "_CRISPR.gff" ); }
@@ -4160,7 +4159,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
                                     }elsif(($filename=~m/\.gff/) && !($filename=~m/all_results_together\.gff/)){
                                           open (my $file, "<", $temp_dir."/".$filename);
                                                 while (<$file>){
@@ -4173,7 +4172,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
                                     }
                               }
                         close $outgff;     
@@ -4497,13 +4496,13 @@ sub find_and_print_CRISPRS {
       foreach  my $cut (@cuts) {
             my $json = read_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' } );
             %finished_CRISPR_hash = ( %finished_CRISPR_hash, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
+            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
             $json = read_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' } );
             my %sechash=%{ decode_json $json };
             foreach  my $seckey (keys(%sechash)){
                         $tempstatistics{$seckey}+=$sechash{$seckey};
             }
-            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
+            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
@@ -4524,7 +4523,7 @@ sub make_database{
 		}else{
 			die "\n\nThere was some problem with the rsync connection to ensembl.\nMaybe you have a typo in the server address or some proxy is hindering the access.\n"
 		}
-		#unlink('temp.log');
+		unlink('temp.log');
 	    system('
 			rsync -av --progress '.$_[1].'gtf/'.$_[0].'/ .;
 			rsync -av --progress --exclude "*abinitio*" '.$_[1].'fasta/'.$_[0].'/cdna/ .;
@@ -4572,7 +4571,7 @@ sub make_database{
 			opendir my $curr_dir , ".";
 			while (readdir($curr_dir)) {
 				if (-z $_) {
-					#unlink($_);
+					unlink($_);
 				}				
 			}
 			closedir($curr_dir);
@@ -4780,7 +4779,7 @@ sub include_cpg{
                 close INFILE;
                 close OUTFILE; 
 			}else{
-				#unlink($file);
+				unlink($file);
 			}
 				
                 
@@ -5084,7 +5083,7 @@ sub predict_cpg_islands{
         }
         
         close(OUT);
-        ##unlink "$exportfile";
+        unlink "$exportfile";
         
         sub get_parameter ($){
                 my $cgs;
@@ -5103,7 +5102,7 @@ sub predict_cpg_islands{
         }
         
         }
-		#unlink($filename)
+		unlink($filename)
 }
 #########################################################################################
 #name:      comp
