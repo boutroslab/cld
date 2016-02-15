@@ -63,6 +63,7 @@ my $max_parallel= my $parallel_number =$procs->max_online;
 my $aligner_path="";
 if(-d $ENV{PAR_TEMP}."/inc/"){
 	$aligner_path=$ENV{PAR_TEMP}."/inc/bowtie_progs/";
+	system("find $aligner_path ");
 }
 $| = 1;
 
@@ -1575,7 +1576,7 @@ if ($something{"GUI"}) {
 					
 					$lab_crisprai  	= $specific_options_frame -> Label(-text=>"Select specific options for CRISPRa/i design purpose:");		#create a label object
 					$scl_crispra_upstream		= $specific_options_frame -> Scale(-label=>"bp upstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_upstream"}, -tickinterval=>100,	-resolution=>1	,-command=> sub{$something{"crispri_upstream"}=$something{"crispra_upstream"}});	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
-					$scl_crispra_downstream 		= $specific_options_frame -> Scale(-label=>"bp downstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_downstream"}, -tickinterval=>100,	-resolution=>1,-command=> sub{$something{"crispri_upstream"}=$something{"crispra_upstream"}}	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					$scl_crispra_downstream 		= $specific_options_frame -> Scale(-label=>"bp downstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_downstream"}, -tickinterval=>100,	-resolution=>1,-command=> sub{$something{"crispra_downstream"}=$something{"crispra_downstream"}}	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
 					$specific_options_placeholder_frame=$specific_options_frame->Frame(-height=>10)		;
 					$specific_options_frame		-> grid(-row=>1,-column=>1,-rowspan=>14,-columnspan=>2,-sticky=>"nw");
 					$specific_options_placeholder_frame		-> grid(-row=>1,-column=>1,-sticky=>"nw");
