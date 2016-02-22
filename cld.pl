@@ -2,8 +2,6 @@
 ###################################################################################################################################################################################################
 # initialize geneneral cld settings and import perl dependencies
 ###################################################################################################################################################################################################
-
-if (-e "X") {
 use strict;
 #use warnings FATAL => 'all';
 use Bio::DB::Fasta;
@@ -51,13 +49,6 @@ require Tk::Checkbutton;
 require Tk::MainWindow;
 require Tk::NoteBook;
 require Tk::Text::SuperText;
-print "Starting X11...\n";
-}else{
-    die;
-}
-
-
-
 my $procs = new Unix::Processors;
 my $max_parallel= my $parallel_number =$procs->max_online;
 my $aligner_path="";
@@ -179,8 +170,6 @@ my(
     $output_dir_entry ,
     $funct_results
 );
-
-
 ###################################################################################################################################################################################################
 # read in command line options
 ###################################################################################################################################################################################################
@@ -256,7 +245,7 @@ Options:
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
 								    			this folder must be prepared by --task= target_ident
 			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
-													-an be : 1 or 0 (default: 0)
+													-an be : 1 or 0 (default:0)
 
 		 end_to_end 							to perform and end-to-end analysis from target identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
@@ -3153,6 +3142,7 @@ sub make_a_crispr_library{
             $seqcount++;
             push(@fname_array,$fname);
             print "$fname has been searched for designs. Search is done ".($seqcount/$maxcount*100)." %.\n";
+            if (defined $something{"GUI"}) {$mw->update;};
       } # end the loop after Hash and statistic were created, so the Bowtie Magic will be executed only once
       %statistics    = ();
       %CRISPR_hash   = ();
@@ -3680,11 +3670,13 @@ sub make_a_crispr_library{
 														  #print its start on this whole sequence these are not genomic coordinates
 														   my @locus=split("::",$statistics{$fname}{"seq_location"});
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1] . "\t";
 														  }
 														  #print its end on this whole sequence these are  genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}+$locus[1] . "\t";
 														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} . "\t";
@@ -3827,11 +3819,13 @@ sub make_a_crispr_library{
 														  #print its start on this whole sequence these are  genomic coordinates
 														  my @locus=split("::",$statistics{$fname}{"seq_location"});
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1] . "\t";
 														  }
 														  #print its end on this whole sequence these are  genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
-																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}+$locus[1] . "\t";
 														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} . "\t";
@@ -3967,8 +3961,10 @@ sub make_a_crispr_library{
 																	  sort { if($something{"sort_by_rank"}==1){$CRISPR_hash{$fname}{$b}->{"custom_score"} <=> $CRISPR_hash{$fname}{$a}->{"custom_score"} }else{return 1} }
 																	keys(%{$CRISPR_hash{$fname}}) ) {
                                                 my @locus=split("::",$statistics{$fname}{"seq_location"});
-                                                print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1])."\t";
-                                                print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
+                                               # print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1])."\t";
+                                            #print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
+                                             print $gfffile $locus[0]."\tcld\tCRISPRtarget\t".(${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1])."\t";
+                                            print $gfffile (${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}+$locus[1])."\t".sum(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}})."\t";
                                                 if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
                                                       print $gfffile "-"."\t."."\t";
                                                 }else{
@@ -4115,6 +4111,7 @@ sub make_a_crispr_library{
                               $CRISPR_cnt{$fname}++;
                         }
                   print "$fname is completed 100%\n";
+                  if (defined $something{"GUI"}) {$mw->update;};
                   } #end Sequence loop
 				  my %all_stats;
                   foreach my $key (keys %statistics){
@@ -4211,9 +4208,10 @@ sub find_and_print_CRISPRS {
       my $cut                       = 0;
       my @cuts                      = ();
       my $correction=500;
-            if(!exists $something{"GENE.SYMB"}){
-                  $correction=0;
-            }
+        if ($something{"data_type"} eq "coordinates") {
+            $correction=0;
+        }
+        
       my %tempstatistics            = ();
       my $input5=$something{"preceding"};
       my $input3=$something{"PAM"};
@@ -4529,6 +4527,7 @@ sub make_database{
 			rsync -av --progress --exclude "*primary_assembly*" --exclude "*dna_rm*" --exclude "*dna.chromosome*" --exclude "*dna_sm*" '.$_[1].'fasta/'.$_[0].'/dna/ .;
 		');
 	    print "All files were dowloaded\n";
+        if (defined $something{"GUI"}) {$mw->update;};
 			system('for f in *.gz ; do gunzip $f; done ;');
 			system('for f in *.gtf ; do cat $f > '.$_[0].'.new.gta ; done ;');
 			system('for f in *.cdna.all.fa  ; do cat $f > '.$_[0].'.cdna.all.new.fu ; done ;');	    
@@ -4542,13 +4541,16 @@ sub make_database{
 			system('for f in *.gta ; do rm $f ; done ;');
 			system('for f in *.cdna.all.new.fu ; do rm $f ; done ;');
 			system('for f in *.dna.toplevel.new.fu ; do rm $f ; done ;');
-			print "All files were unzipped\n";			
+			print "All files were unzipped\n";
+            if (defined $something{"GUI"}) {$mw->update;};
 			create_mygff($_[0].'.dna.toplevel.fa',$_[0].'.gtf',$_[0].'.all.dna.fa');
 			print "All files were converted to gff\n";
+            if (defined $something{"GUI"}) {$mw->update;};
 			wrap_sequences($_[0].'.cdna.all.fa');
 			cpg_for_all($_[0].'.dna.toplevel.fa'); #store CpG-island information in csv-files
 			system('for f in *.fasta ; do rm $f ;done ;');
 			print "The entire genome was checked for CPG islands\n";
+            if (defined $something{"GUI"}) {$mw->update;};
 			system('rm *all*.fasta;');
 			system('rm *.flat;');
 			system('rm *.gdx');
@@ -4558,14 +4560,17 @@ sub make_database{
 			correct_cdna($_[0].".cdna.all.fa"); #change header of [organsim].cdna.all.fa in [organsim].cdna.all.facorrected.fa
 			system('for f in *.cdna.all.fa ; do rm $f ;done ;');
 			print "CDNA files were corrected\n";
+            if (defined $something{"GUI"}) {$mw->update;};
 			system("mv ".$_[0].".cdna.all.facorrected.fa ".$_[0].".cdna.all.fa;"); #rename [organsim].cdna.all.facorrected.fa
 			system('for f in *.gff ; do rm $f ;done ;');
 			 print "Annotation were formatted\n";
+             if (defined $something{"GUI"}) {$mw->update;};
 			include_cpg("."); #add CpG-island information to mygff-files
 			system('for f in *.csv ; do rm $f ;done ;');
 			system('for f in *.gtf ; do rm $f ;done ;');
 			print "All prerequisites for building alignment indeces were built correctly.\nNow Bowtie indeces will be build, depending on the size of the target genome, this can take a while.\n";
-			if(can_run('bowtie2-build')){system("bowtie2-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie2-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie2-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;");} #create files with bowtie2-indices
+			if (defined $something{"GUI"}) {$mw->update;};
+            if(can_run('bowtie2-build')){system("bowtie2-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie2-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie2-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;");} #create files with bowtie2-indices
 			if(can_run('bowtie-build')){system("bowtie-build ".$_[0].".cdna.all.fa ".$_[0].".cdna & bowtie-build ".$_[0].".all.dna.fa ".$_[0].".dna & bowtie-build ".$_[0].".dna.toplevel.fa ".$_[0].".genome;"); }#create files with bowtie-indices
 			opendir my $curr_dir , ".";
 			while (readdir($curr_dir)) {
@@ -4575,6 +4580,7 @@ sub make_database{
 			}
 			closedir($curr_dir);
             my $pwd = cwd();
+            if (defined $something{"GUI"}) {$mw->update;};
 			print "The database for the organism ".$_[0]." has been built in the following path:\n$pwd";
 			if (defined $something{"GUI"}) {
                  $make_database->messageBox(
@@ -5082,7 +5088,7 @@ sub predict_cpg_islands{
         }
         
         close(OUT);
-        #unlink "$exportfile";
+        unlink "$exportfile";
         
         sub get_parameter ($){
                 my $cgs;
