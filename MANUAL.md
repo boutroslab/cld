@@ -148,7 +148,7 @@ In the following table every parameters as can be defined in the parameter-file 
 | draw_html_report | defines if an html report should be created | boolean (1 or 0) |
 | working_path | defines if an unix path to the results should be used, else results are created in the current working directory (.) | e.g. /data/workdir/ |
 | databasepath | defines if an unix path to the folder containing CLD formatted databases should be generated | e.g. /data/databases/ |
-| ref_organism | defines the reference organism as given in the name of the database and the sub-directories e.g. if the organisms is homo_sapiens, the database needs to have the prefix homo_sapiens | e.g. homo_sapiens , dmel |
+| ref_organism | defines the reference organism as given in the name of the database and the sub-directories e.g. if the organisms is homo_sapiens, the database needs to have the prefix homo_sapiens | e.g. homo_sapiens , drosophila_melanogaster |
 | data_type | defines if the input file contains official gene symbols, ENSEMBL IDs or genomic coordinates. Coordinates need to be given as ID, chromosome (Ensembl_type), start, end. Coordinate data need to be tab separated and different entries need to be newline separated | should be either ensemble_acc, gene_symbol or coordinates |
 | ignore_missing_id | defines if the program should die if IDs are faced, that can not be found in the currently used database | boolean (1 or 0) |
 | kind | defines if sgRNA target sites should be found in a single or paired mode (suitable for the paired nickase or FokI paired nuclease approach) | single or double |

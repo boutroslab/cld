@@ -57,7 +57,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.0.0','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.0','2016-02-24','2013-2016');
 
 
 ###################################################################################################################################################################################################
@@ -1830,7 +1830,6 @@ sub calculate_CRISPR_score {
       $score{"CRISPRi"}=0;
       $score{"CRISPRa"}=0;
       my %transcripts=();
-	  print "here come the annotations beteen ",int($_[2])," and ", int($_[3]),"\n";
 	  if ( exists $_[0]->{$_[4]} ) { # check wethere the tree exists
             #search for annotations in the intervall from start (2) to end (3) and count them in score
             my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );            
@@ -1847,7 +1846,6 @@ sub calculate_CRISPR_score {
             }
 			my $tmp;
             foreach  my $anno ( @{$annotations} ) {
-				print $anno,"\n";
                   if ( $anno =~ m/gene_(\S+)_(\d+)_(\d+)/ ) {
                         $new_score[1]++;
                         $tmp=$1;
@@ -2469,15 +2467,7 @@ sub filter_library{
 					sort { if($something{"sort_by_rank"}==1){${$id_with_info{$key}}{$b}->{"custom_score"} <=> ${$id_with_info{$key}}{$a}->{"custom_score"} }else{return 1} }
 					keys %{$id_with_info{$key}}
 					){
-					if( 		$count{$key} < $coverage &&
-									!(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAAGAC/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GTCTTC/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAATTC/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CTTAAG/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CAATTG/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GTTAAC/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/CTCGAG/) &&
-								   !(${${$id_with_info{$key}}{$element}}{"seq"}=~m/GAGCTC/) 
+					if( 		$count{$key} < $coverage  
 						){
 							$count{$key}++;
 							${$id_for_lib{$key}}{$element}++;
@@ -2923,8 +2913,7 @@ sub make_temp_fasta_file_from_coords {
 sub make_a_crispr_library{
       #define default starting variables
 	  my $temp_dir            = "";
-	  if (!defined $something{"GUI"}) {
-		my %something           = ();		
+	  if (!defined $something{"GUI"}) {		
 		$something{"input_file"}=$_[1];
 		#create a time stamped output folder		
 		$temp_dir = scalar localtime();
@@ -2944,6 +2933,7 @@ sub make_a_crispr_library{
 					chomp $element;
 					my @line=split("=",$element);
 					$something{$line[0]} = $line[1];
+                    #print $line[0],"\t",$something{$line[0]},"\n";
 			  }
 		close $parameterfile;
       }else{
@@ -3149,10 +3139,10 @@ sub make_a_crispr_library{
       foreach my $fname ( @fname_array ) {
             my $json = read_file( $temp_dir . "/" .$fname. '.json', { binmode => ':raw' } );
             %CRISPR_hash = ( %CRISPR_hash, %{ decode_json $json } );
-            unlink $temp_dir . "/" . $fname. ".json";
+            #unlink $temp_dir . "/" . $fname. ".json";
             $json = read_file( $temp_dir . "/" . $fname. 'stats.json', { binmode => ':raw' } );
             %statistics=( %statistics, %{ decode_json $json } );
-            unlink $temp_dir . "/" . $fname. "stats.json";
+            #unlink $temp_dir . "/" . $fname. "stats.json";
       }
 	  if ($something{"PAM"} eq "any") {
 			if ($something{"textpam"}=~m/([^ACGTUKMSWRYBVDHN]+)/g) {
@@ -3315,7 +3305,7 @@ sub make_a_crispr_library{
                                                             
                                                             if ( $cond==1 ) {
                                                                   my $startcoordinate=0;
-                                                                  if ($something{"offtargetdb"} eq "genomicDNA") {
+                                                                  if ($something{"offtargetdb"} eq "genomeDNA") {
                                                                         my $namestuff="";
                                                                         if ( !exists $trees{$line[2]} ) { #TODO if und else fast identisch, aber relativ kurzer Part und daher Funktion performancetechnisch nachteilig
                                                                               $trees{$line[2]} = build_tree( $something{"databasepath"}  . $something{"ref_organism"} . "/" . $line[2] . "_indexed" );
@@ -3343,7 +3333,7 @@ sub make_a_crispr_library{
                                     }
                               close $bowtie;
                               
-                              unlink $temp_dir . "/temp_out.bwt";
+                              #unlink $temp_dir . "/temp_out.bwt";
                               if ( $something{"sec_off_target"} ==1 ) { #ckeck if this is wanted
                                     ###############################################################################################################################################################
                                     
@@ -3366,9 +3356,9 @@ sub make_a_crispr_library{
                                                 }
                                           }
                                     close $bowtie;
-                                    unlink $temp_dir . "/temp_out.bwt";
+                                    #unlink $temp_dir . "/temp_out.bwt";
                               }
-                              unlink $temp_dir . "/temp_CRISPRS.fasta";
+                              #unlink $temp_dir . "/temp_CRISPRS.fasta";
                         }else{
                               
                               #####################################################################################################################################################################
@@ -3435,6 +3425,7 @@ sub make_a_crispr_library{
                                                                               }
                                                                               my $annotations = $trees{$line[2]}->fetch( int($line[3]), int(($line[3])) );
                                                                               foreach  my $anno ( @{$annotations} ) {
+                                                                                print $anno;
                                                                                     if ( $anno =~ m/gene_(\S+)_([0-9]+)_([0-9]+)/ ) {
                                                                                           $namestuff=$1;
                                                                                           #$startcoordinate=$2;
@@ -3488,9 +3479,9 @@ sub make_a_crispr_library{
                                           }
                                     }
                               close $bowtie;
-                              unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
-                              unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
-                              unlink $temp_dir . "/temp_out.bwt";
+                              #unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
+                              #unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
+                              #unlink $temp_dir . "/temp_out.bwt";
                               #####################################################################################################################################################################
                               #  if ( exists $something{"sec_off_target"} ) needed for double! @Florian
                               #####################################################################################################################################################################
@@ -4006,7 +3997,7 @@ sub make_a_crispr_library{
                               # ZIP the stuff
                               #####################################################################################################################################################################
                             
-                              unlink $temp_dir . "/tempfile.fasta";
+                              #unlink $temp_dir . "/tempfile.fasta";
                               my $zip    = Archive::Zip->new();
                               my $member = "";
                               if ( $something{"out_gff"} ==1) { $member = $zip->addFile( $temp_dir . "/" . $fname . ".gff", $fname . "_CRISPR.gff" ); }
@@ -4155,7 +4146,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          unlink $temp_dir."/".$filename;
+                                          #unlink $temp_dir."/".$filename;
                                     }elsif(($filename=~m/\.gff/) && !($filename=~m/all_results_together\.gff/)){
                                           open (my $file, "<", $temp_dir."/".$filename);
                                                 while (<$file>){
@@ -4168,7 +4159,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          unlink $temp_dir."/".$filename;
+                                          #unlink $temp_dir."/".$filename;
                                     }
                               }
                         close $outgff;     
@@ -4276,7 +4267,6 @@ sub find_and_print_CRISPRS {
                   LENGTHLOOP:foreach my $length ($minlength..$maxlength){
                         my $re_fwd=$prime_5.'.{'.$length.'}'.$prime_3;
                         my $re_rev=$prime_3_comp.'.{'.$length.'}'.$prime_5_comp;
-                        print "$re_rev|$re_fwd\n";
                         POSLOOP:while ($seq =~ m/$re_rev|$re_fwd/g) {
                                     pos $seq = $-[0] + 1 ;
                                     my @temp=($-[0],length($&));                    
@@ -4493,13 +4483,13 @@ sub find_and_print_CRISPRS {
       foreach  my $cut (@cuts) {
             my $json = read_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' } );
             %finished_CRISPR_hash = ( %finished_CRISPR_hash, %{ decode_json $json } );
-            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
+            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
             $json = read_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' } );
             my %sechash=%{ decode_json $json };
             foreach  my $seckey (keys(%sechash)){
                         $tempstatistics{$seckey}+=$sechash{$seckey};
             }
-            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
+            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
@@ -4520,7 +4510,7 @@ sub make_database{
 		}else{
 			die "\n\nThere was some problem with the rsync connection to ensembl.\nMaybe you have a typo in the server address or some proxy is hindering the access.\n"
 		}
-		unlink('temp.log');
+		#unlink('temp.log');
 	    system('
 			rsync -av --progress '.$_[1].'gtf/'.$_[0].'/ .;
 			rsync -av --progress --exclude "*abinitio*" '.$_[1].'fasta/'.$_[0].'/cdna/ .;
@@ -4575,7 +4565,7 @@ sub make_database{
 			opendir my $curr_dir , ".";
 			while (readdir($curr_dir)) {
 				if (-z $_) {
-					unlink($_);
+					#unlink($_);
 				}				
 			}
 			closedir($curr_dir);
@@ -4784,7 +4774,7 @@ sub include_cpg{
                 close INFILE;
                 close OUTFILE; 
 			}else{
-				unlink($file);
+				#unlink($file);
 			}
 				
                 
@@ -5088,7 +5078,7 @@ sub predict_cpg_islands{
         }
         
         close(OUT);
-        unlink "$exportfile";
+        #unlink "$exportfile";
         
         sub get_parameter ($){
                 my $cgs;
@@ -5107,7 +5097,7 @@ sub predict_cpg_islands{
         }
         
         }
-		unlink($filename)
+		#unlink($filename)
 }
 #########################################################################################
 #name:      comp
@@ -5284,49 +5274,5 @@ sub calc_XU_score{
 sub rndStr{ join"", @_[ map{ rand @_ } 1 .. shift ] };
 
 sub mock{};
-=cut
 
-=head1 LICENSE AND COPYRIGHT
-
-Copyright 2014 Florian Heigwer.
-
-This program is free software; you can redistribute it and/or modify it
-under the terms of the the Artistic License (2.0). You may obtain a
-copy of the full license at:
-
-L<http://www.perlfoundation.org/artistic_license_2_0>
-
-Any use, modification, and distribution of the Standard or Modified
-Versions is governed by this Artistic License. By using, modifying or
-distributing the Package, you accept this license. Do not use, modify,
-or distribute the Package, if you do not accept this license.
-
-If your Modified Version has been derived from a Modified Version made
-by someone other than you, you are nevertheless required to ensure that
-your Modified Version complies with the requirements of this license.
-
-This license does not grant you the right to use any trademark, service
-mark, tradename, or logo of the Copyright Holder.
-
-This license includes the non-exclusive, worldwide, free-of-charge
-patent license to make, have made, use, offer to sell, sell, import and
-otherwise transfer the Package with respect to any patent claims
-licensable by the Copyright Holder that are necessarily infringed by the
-Package. If you institute patent litigation (including a cross-claim or
-counterclaim) against any party alleging that the Package constitutes
-direct or contributory patent infringement, then this Artistic License
-to you shall terminate on the date that such litigation is filed.
-
-Disclaimer of Warranty: THE PACKAGE IS PROVIDED BY THE COPYRIGHT HOLDER
-AND CONTRIBUTORS "AS IS' AND WITHOUT ANY EXPRESS OR IMPLIED WARRANTIES.
-THE IMPLIED WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR
-PURPOSE, OR NON-INFRINGEMENT ARE DISCLAIMED TO THE EXTENT PERMITTED BY
-YOUR LOCAL LAW. UNLESS REQUIRED BY LAW, NO COPYRIGHT HOLDER OR
-CONTRIBUTOR WILL BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, OR
-CONSEQUENTIAL DAMAGES ARISING IN ANY WAY OUT OF THE USE OF THE PACKAGE,
-EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-
-
-=cut
-
-1; # End of ETOOLS::ECRISP
+1; 
