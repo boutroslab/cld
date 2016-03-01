@@ -126,7 +126,7 @@ In the following table every parameters as can be defined in the parameter-file 
 | preceding | defines if the protospacer should begin with a specific base (example: U6 promotor would favour G at this position) | IUPAC coded Nucleotide |
 | PAM_location | defines if the PAM motif is 3' or 5' located with respect to the protospacer | 3_prime or 5_prime |
 | PAM | defines the PAM sequence, which can be NAG, NGG or any (allowing both) | IUPAC coded Nucleotides |
-| ignore_intergenic | defines if off-targets which are not in any gene should be ignored | true or false |
+| ignore_intergenic | defines if off-targets which are not in any gene should be ignored | boolean (1 or 0) |
 | purpose | defines following purposes: knockdown/-out as pupose requires designs to hit in coding sequences near the start codon of a gene, N-terminal tagging requires the start codon to be targeted and C-terminal tagging requires the stop codon to be targeted by sgRNAs | knockout, n-tagging, c-tagging, non-coding, CRISPRa or CRISPRi |
 | gene_exclusive | defines if the sgRNA needs to target a region within the targeted gene (for CRISPRa/i 500 before and after the gene are parsed too) | boolean (1 or 0) |
 | exon_exclusive | defines if the sgRNA needs to target a region within an exon | boolean (1 or 0) |
