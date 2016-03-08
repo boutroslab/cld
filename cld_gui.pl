@@ -5,7 +5,7 @@
 system('if [ ! -s $DISPLAY ]; then echo "X";touch X; else echo "On MacOS: Please install Xquartz from\nhttp://www.xquartz.org/\nOn linux do:\nyum install xorg-x11-apps or sudo apt-get install xserver-xorg xorg openbox xauth"; fi;');
 
 if (-e "X") {
-use strict;
+#use strict;
 #use warnings FATAL => 'all';
 use Bio::DB::Fasta;
 use Bio::SeqIO;
