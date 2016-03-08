@@ -2,7 +2,7 @@
 ###################################################################################################################################################################################################
 # initialize geneneral cld settings and import perl dependencies
 ###################################################################################################################################################################################################
-use strict;
+#use strict;
 #use warnings FATAL => 'all';
 use Bio::DB::Fasta;
 use Bio::SeqIO;
@@ -4104,18 +4104,20 @@ sub make_a_crispr_library{
                   print "$fname is completed 100%\n";
                   if (defined $something{"GUI"}) {$mw->update;};
                   } #end Sequence loop
-				  my %all_stats;
+		  my %all_stats;
                   foreach my $key (keys %statistics){
-					foreach my $subkey (keys(%{$statistics{$key}})){
-							if ($subkey =~ m/Number/) {
-								  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
-								  $all_stats{$subkey}+=$statistics{$key}{$subkey};
-							}
-					  }
-				  }
-				   foreach my $key (sort keys %all_stats){
-						print $key.' = '.$all_stats{$key}."\n";
-				  }
+		      if( $statistics{$key} =~m/[a-zA-Z]+/){
+			  foreach my $subkey (keys( %{ $statistics{$key} } ) ){
+			      if ($subkey =~ m/Number/) {
+				  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
+				  $all_stats{$subkey}+=$statistics{$key}{$subkey};
+			      }
+			  }
+		      }
+	           }
+		   foreach my $key (sort keys %all_stats){
+		       print $key.' = '.$all_stats{$key}."\n";
+		   }
 				  
 				  
                   if ($something{"draw_html_report"} ==1 ){
