@@ -4118,6 +4118,7 @@ sub make_a_crispr_library{
                   } #end Sequence loop
 				  my %all_stats;
                   foreach my $key (keys %statistics){
+		      if( $statistics{$key} =~m/[a-zA-Z]+/){
 					foreach my $subkey (keys(%{$statistics{$key}})){
 							if ($subkey =~ m/Number/) {
 								  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
@@ -4125,6 +4126,7 @@ sub make_a_crispr_library{
 							}
 					  }
 				  }
+		  }
 				   foreach my $key (sort keys %all_stats){
 						print $key.' = '.$all_stats{$key}."\n";
 				  }
