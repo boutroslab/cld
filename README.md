@@ -16,6 +16,7 @@ Here we describe CRISPR library designer (CLD), an integrated bioinformatics app
 
 On Mac/Linux\:
  1. If you haven't, install Xquartz from http://www.xquartz.org/
+   
    1.1 When logging in remotely: log into your remote server by ssh -X
  2. Download CLD_GUI_Mac.zip or CLD_GUI_Ubuntu.zip according to your Operating system and unzip it.
  3. Double click on the application or open it by ./CLD in the Terminal.
