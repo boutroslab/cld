@@ -1,0 +1,5 @@
+Thank for using cld. Please cite:
+
+F. Heigwer*, T. Zhan*, M. Breinig, J. Winter, D. Brügemann, S. Leible, M. Boutros
+CRISPR library designer (CLD): software for multispecies design of single guide RNA libraries
+Genome Biol., 2016, DOI:10.1186/s13059-016-0915-2
