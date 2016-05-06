@@ -2,7 +2,7 @@
 ###################################################################################################################################################################################################
 # initialize geneneral cld settings and import perl dependencies
 ###################################################################################################################################################################################################
-#use strict;
+
 #use warnings FATAL => 'all';
 use Bio::DB::Fasta;
 use Bio::SeqIO;
@@ -49,6 +49,9 @@ require Tk::Checkbutton;
 require Tk::MainWindow;
 require Tk::NoteBook;
 require Tk::Text::SuperText;
+
+#open(my $debug_log, ">", "debug_log.txt") or die $!;
+
 my $procs = new Unix::Processors;
 my $max_parallel= my $parallel_number =$procs->max_online;
 my $aligner_path="";
@@ -57,7 +60,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.0','2016-02-24','2013-2016');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.0','2015-09-01','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -170,6 +173,8 @@ my(
     $output_dir_entry ,
     $funct_results
 );
+
+$something{"GUI"}=1;
 ###################################################################################################################################################################################################
 # read in command line options
 ###################################################################################################################################################################################################
@@ -1562,10 +1567,14 @@ if ($something{"GUI"}) {
 					$scl_minspacerlength			= $specific_options_frame -> Scale(-label=>"min spacer-length:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>50,	-variable=>\$something{"minspacerlength"}, -tickinterval=>20,	-resolution=>1 ,-command=> sub {if($something{"minspacerlength"}>$something{"maxspacerlength"}){$something{"maxspacerlength"}=$something{"minspacerlength"}}}	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
 					$scl_maxspacerlength 		= $specific_options_frame -> Scale(-label=>"max spacer-length:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>50,	-variable=>\$something{"maxspacerlength"}, -tickinterval=>20,	-resolution=>1 ,-command=> sub {if($something{"minspacerlength"}>$something{"maxspacerlength"}){$something{"minspacerlength"}=$something{"maxspacerlength"}}}	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
 					
-					$lab_crisprai  	= $specific_options_frame -> Label(-text=>"Select specific options for CRISPRa/i design purpose:");		#create a label object
-					$scl_crispra_upstream		= $specific_options_frame -> Scale(-label=>"bp upstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_upstream"}, -tickinterval=>100,	-resolution=>1	,-command=> sub{$something{"crispri_upstream"}=$something{"crispra_upstream"}});	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
-					$scl_crispra_downstream 		= $specific_options_frame -> Scale(-label=>"bp downstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_downstream"}, -tickinterval=>100,	-resolution=>1,-command=> sub{$something{"crispra_downstream"}=$something{"crispra_downstream"}}	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
-					$specific_options_placeholder_frame=$specific_options_frame->Frame(-height=>10)		;
+					my $lab_crispra  	= $specific_options_frame -> Label(-text=>"Select specific options for CRISPRa design purpose:");		#create a label object
+					$scl_crispra_upstream		= $specific_options_frame -> Scale(-label=>"bp upstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_upstream"}, -tickinterval=>100,	-resolution=>10);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					$scl_crispra_downstream 		= $specific_options_frame -> Scale(-label=>"bp downstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispra_downstream"}, -tickinterval=>100,	-resolution=>10);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					my $lab_crispri  	= $specific_options_frame -> Label(-text=>"Select specific options for CRISPRi design purpose:");		#create a label object
+					my $scl_crispri_upstream		= $specific_options_frame -> Scale(-label=>"bp upstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispri_upstream"}, -tickinterval=>100,	-resolution=>10);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					my $scl_crispri_downstream 		= $specific_options_frame -> Scale(-label=>"bp downstream of TSS:",-orient=>'h',	-length=>200,	-digit=>1,	-from=>1,	-to=>500,	-variable=>\$something{"crispri_downstream"}, -tickinterval=>100,	-resolution=>10);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					
+                    $specific_options_placeholder_frame=$specific_options_frame->Frame(-height=>10)		;
 					$specific_options_frame		-> grid(-row=>1,-column=>1,-rowspan=>14,-columnspan=>2,-sticky=>"nw");
 					$specific_options_placeholder_frame		-> grid(-row=>1,-column=>1,-sticky=>"nw");
 					$chk_purpose_exclusive		-> grid(-row=>2,-column=>1,-sticky=>"nw");
@@ -1580,9 +1589,12 @@ if ($something{"GUI"}) {
 					$lab_paired					-> grid(-row=>9,-column=>1,-columnspan=>2,-sticky=>"nw",-pady =>20);
 					$scl_minspacerlength		-> grid(-row=>10,-column=>1,-sticky=>"nw");
 					$scl_maxspacerlength		-> grid(-row=>10,-column=>2,-sticky=>"nw");
-					$lab_crisprai				-> grid(-row=>11,-column=>1,-columnspan=>2,-sticky=>"nw",-pady =>20);
+					$lab_crispra				-> grid(-row=>11,-column=>1,-columnspan=>2,-sticky=>"nw",-pady =>20);
 					$scl_crispra_upstream		-> grid(-row=>12,-column=>1,-sticky=>"nw");
 					$scl_crispra_downstream		-> grid(-row=>12,-column=>2,-sticky=>"nw");
+                    $lab_crispri				-> grid(-row=>13,-column=>1,-columnspan=>2,-sticky=>"nw",-pady =>20);
+					$scl_crispri_upstream		-> grid(-row=>14,-column=>1,-sticky=>"nw");
+					$scl_crispri_downstream		-> grid(-row=>14,-column=>2,-sticky=>"nw");
 					
 					my $library_page=$end_to_end->add('page8', -label => 'Library');
 						my $library_frame=$library_page->Frame(-borderwidth => 2, -relief => 'groove');
@@ -1818,6 +1830,9 @@ sub calculate_CRISPR_score {
       my %score = ();
 	  my $gene_name=$_[7];
       my @new_score=@{$_[6]};
+      my $strand="+";
+        $score{"CRISPRi"}=0;
+        $score{"CRISPRa"}=0;
       my $expression="[";
       if (($_[1]->{"number_of_CDS"}>0)) {
          foreach my $number(1..$_[1]->{"number_of_CDS"}){
@@ -1827,31 +1842,21 @@ sub calculate_CRISPR_score {
       }else{
              $expression="[.]";
       }
-      $score{"CRISPRi"}=0;
-      $score{"CRISPRa"}=0;
-      my %transcripts=();
 	  if ( exists $_[0]->{$_[4]} ) { # check wethere the tree exists
             #search for annotations in the intervall from start (2) to end (3) and count them in score
             my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );            
-            foreach  my $anno ( @{$annotations} ) {
-                  if ( $anno =~ m/gene_(\S+)_(\d+)_(\d+)/ ) {
-                       my $gene_annotations = $_[0]->{$_[4]}->fetch( int($2), int($3) );                        
-                        foreach  my $gene_anno ( @{$gene_annotations} ) {
-                              if ($gene_anno=~m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {    
-                                    ${$transcripts{$1}}{"exon".$2}=$4."_".$5;
-                              }
-                        }
-                        last;
-                  }
-            }
 			my $tmp;
+            my $gene_tmp;
+            my $tmpstr;
             foreach  my $anno ( @{$annotations} ) {
-                  if ( $anno =~ m/gene_(\S+)_(\d+)_(\d+)/ ) {
+                  if ( $anno =~ m/gene_(\S+)::([\+\-])_(\d+)_(\d+)/ ) {
                         $new_score[1]++;
-                        $tmp=$1;
-						${ $score{"gene"} }{$1}++;
+                        $tmp=$gene_tmp=$1;
+                        $tmpstr=$2;
+						${ $score{"gene"} }{$tmp}++;
 						if ($tmp=~m/$gene_name/) {
-							${ $score{"this_gene"} }{$1}++;
+							${ $score{"this_gene"} }{$tmp}++;
+                            $strand=$tmpstr;
                         }           
                   } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
@@ -1881,52 +1886,34 @@ sub calculate_CRISPR_score {
                         $new_score[1]++;
                   }
             }
-            my $strand=1;
-            my $first_start=0;
-            my $first_end=0;
-            my $second_start=0;
-            foreach my $trans (keys %transcripts){
-                my %temp=%{$transcripts{$trans}};
-				if(exists $temp{"exon1"}){
-					my @first_temp=split("_",$temp{"exon1"});
-					$first_start=$first_temp[0];
-					$first_end=$first_temp[1];
-				}
-                if(exists $temp{"exon2"}){
-					my @second_temp=split("_",$temp{"exon2"});
-					$second_start=$second_temp[0];
-					if ($second_start<$first_start) {
-						$strand=0;
-					}
-				};
-                
-				if (
-					  $strand==1
-					  && ($first_start+$_[1]->{"crispri_upstream"})>=int($_[2])
-					  && ($first_start-$_[1]->{"crispri_downstream"})<=int($_[2])
-					  ) {
-						$score{"CRISPRi"}=1;
-				   }elsif(
-						 $strand==0
-					   && ($first_end-$_[1]->{"crispri_upstream"})<=int($_[2])
-					   && ($first_end+$_[1]->{"crispri_downstream"})>=int($_[2])
-				   ){
-						 $score{"CRISPRi"}=1;
-				   }elsif(
-						 $strand==1
-					   && ($first_start-$_[1]->{"crispra_upstream"})<=int($_[2])
-					   && ($first_start-$_[1]->{"crispra_downstream"})>=int($_[2])
-				   ){
-						 $score{"CRISPRa"}=1;
-				   }elsif(
-						 $strand==0
-					   && ($first_end+$_[1]->{"crispra_upstream"})>=int($_[2])
-					   && ($first_end+$_[1]->{"crispra_downstream"})<=int($_[2])
-				   ){
-						 $score{"CRISPRa"}=1;
-				   }
-            }
             
+           
+            if ($strand eq "+") {
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_downstream"}), int($_[3]+$_[1]->{"crispri_upstream"}) );     
+            }else{
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_upstream"}), int($_[3]+$_[1]->{"crispri_downstream"}) );     
+            }
+            foreach  my $anno ( @{$annotations} ) {
+                 if ( $anno =~ m/TSS::\S+::(\S+)_(\d+)_(\d+)/ ) {
+                    $tmp=$1;
+                    if ($gene_tmp=~m/$tmp/) {
+                        $score{"CRISPRi"}=1;
+                    }           
+              }
+            }
+           if ($strand eq "+") {
+                 $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_downstream"}), int($_[3]+$_[1]->{"crispra_upstream"}) );     
+            }else{
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_upstream"}), int($_[3]+$_[1]->{"crispra_downstream"}) );     
+            }
+            foreach  my $anno ( @{$annotations} ) {
+                 if ( $anno =~ m/TSS_(\S+)_(\d+)_(\d+)/ ) {
+                    $tmp=$1;
+                    if ($tmp=~m/$gene_name/) {
+                        $score{"CRISPRa"}=1;
+                    }           
+              }
+            }
             #search for the start and stop coddon in the intervall from start (2) to end (3) with an up/downstream window
             $annotations = $_[0]->{$_[4]}->fetch( int( $_[2] - $_[1]->{"downstream_window"}), int( $_[3] + $_[1]->{"upstream_window"}) );
             foreach  my $anno ( @{$annotations} ) {
@@ -3139,10 +3126,10 @@ sub make_a_crispr_library{
       foreach my $fname ( @fname_array ) {
             my $json = read_file( $temp_dir . "/" .$fname. '.json', { binmode => ':raw' } );
             %CRISPR_hash = ( %CRISPR_hash, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $fname. ".json";
+            unlink $temp_dir . "/" . $fname. ".json";
             $json = read_file( $temp_dir . "/" . $fname. 'stats.json', { binmode => ':raw' } );
             %statistics=( %statistics, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $fname. "stats.json";
+            unlink $temp_dir . "/" . $fname. "stats.json";
       }
 	  if ($something{"PAM"} eq "any") {
 			if ($something{"textpam"}=~m/([^ACGTUKMSWRYBVDHN]+)/g) {
@@ -3201,27 +3188,30 @@ sub make_a_crispr_library{
                                           }
                                     }
                               close $crisprs;
-                              
+                              my $k = 30;
+                              if ($something{"off-targets-allowed"}>30) {
+                                $k=$something{"off-targets-allowed"}+1;
+                              }                              
                               #####################################################################################################################################################################
                               #teemp_sec
                               if ($something{"bowtie_version"} eq "bowtie2") {
                                     if ($something{"offtargetdb"} eq "gDNA") {
-                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath .".dna". ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
+                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath .".dna". ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
                                     }elsif($something{"offtargetdb"} eq "cDNA"){
-                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath.".cdna" . ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
+                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath.".cdna" . ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
                                     }else{
-                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath.".genome" . ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
+                                          system( $aligner_path.'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $databasepath.".genome" . ' -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
                                     }
                               }elsif($something{"bowtie_version"} eq "bowtie"){
                                     if ($something{"offtargetdb"} eq "gDNA") {
-                                          system( $aligner_path.'bowtie ' . $databasepath .".dna". ' ' . $temp_dir . "/" . 'temp_CRISPRS.fasta -f -v 3 -y -k 30 -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir . '/temp_out.bwt' );
+                                          system( $aligner_path.'bowtie ' . $databasepath .".dna". ' ' . $temp_dir . "/" . 'temp_CRISPRS.fasta -f -v 3 -y -k '.$k.' -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir . '/temp_out.bwt' );
                                     }elsif($something{"offtargetdb"} eq "cDNA"){
-                                          system($aligner_path. 'bowtie ' . $databasepath .".cdna". ' ' . $temp_dir . "/" . 'temp_CRISPRS.fasta -f -v 3 -y -k 30 -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir . '/temp_out.bwt' );
+                                          system($aligner_path. 'bowtie ' . $databasepath .".cdna". ' ' . $temp_dir . "/" . 'temp_CRISPRS.fasta -f -v 3 -y -k '.$k.' -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir . '/temp_out.bwt' );
                                     }else{
                                           if (-e $databasepath.".genome.1.ebwtl") {
-                                                system( $aligner_path.'bowtie ' . $databasepath.".genome" . ' ' . $temp_dir . "/" .'temp_CRISPRS.fasta -f -v 3 -y -k 30 -S --sam-nohead --large-index  --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir .'/temp_out.bwt' );
+                                                system( $aligner_path.'bowtie ' . $databasepath.".genome" . ' ' . $temp_dir . "/" .'temp_CRISPRS.fasta -f -v 3 -y -k '.$k.' -S --sam-nohead --large-index  --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir .'/temp_out.bwt' );
                                           }else{
-                                                system( $aligner_path.'bowtie ' . $databasepath.".genome" . ' ' . $temp_dir . "/" .'temp_CRISPRS.fasta -f -v 3 -y -k 30 -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir .'/temp_out.bwt' );
+                                                system( $aligner_path.'bowtie ' . $databasepath.".genome" . ' ' . $temp_dir . "/" .'temp_CRISPRS.fasta -f -v 3 -y -k '.$k.' -S --sam-nohead --sam-nosq -p '.$parallel_number.'  > ' . $temp_dir .'/temp_out.bwt' );
                                           }
                                     }
                               }else{
@@ -3338,7 +3328,7 @@ sub make_a_crispr_library{
                                     ###############################################################################################################################################################
                                     
                                     #do send a bowtie2 job fot the two temporary written fasta files as if they were paired seqencing reads and save the result in a ~out.bwt file
-                                    system( 'bowtie2 -p '.$parallel_number.'  -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $temp_dir .'/temp_sec -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
+                                    system( 'bowtie2 -p '.$parallel_number.'  -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-hd -x ' . $temp_dir .'/temp_sec -U ' . $temp_dir . '/temp_CRISPRS.fasta > ' . $temp_dir . '/temp_out.bwt' );
                                     open (my $bowtie, "<", $temp_dir . "/temp_out.bwt");
                                           my $edit_distance=0;
                                           while (my $line = <$bowtie>) {
@@ -3387,11 +3377,11 @@ sub make_a_crispr_library{
                               #####################################################################################################################################################################
                               #teemp_sec
                               if ($something{"offtargetdb"} eq "gDNA") {
-                                    system( 'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath .".dna". ' -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
+                                    system( 'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath .".dna". ' -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
                               }elsif($something{"offtargetdb"} eq "cDNA"){
-                                    system( 'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath.".cdna". ' -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
+                                    system( 'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath.".cdna". ' -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
                               }else{
-                                    system( 'bowtie2 -p '.$parallel_number.' -f -k 30 --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath.".genome".'  -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
+                                    system( 'bowtie2 -p '.$parallel_number.' -f -k '.$k.' --'.$something{"bowtie_mode"}.' --end-to-end --no-mixed --no-discordant --no-hd -x ' . $databasepath.".genome".'  -I '.$something{"minspacerlength"}.' -X 100 -1 ' . $temp_dir . '/temp_LEFTCRISPRS.fasta'. ' -2 ' . $temp_dir . '/temp_RIGHTCRISPRS.fasta'.' > ' . $temp_dir . '/temp_out.bwt' );
                               }
                               open (my $bowtie, "<", $temp_dir . "/temp_out.bwt");
                               my $edit_distance=0;
@@ -4104,20 +4094,20 @@ sub make_a_crispr_library{
                   print "$fname is completed 100%\n";
                   if (defined $something{"GUI"}) {$mw->update;};
                   } #end Sequence loop
-		  my %all_stats;
+				  my %all_stats;
                   foreach my $key (keys %statistics){
 		      if( $statistics{$key} =~m/[a-zA-Z]+/){
-			  foreach my $subkey (keys( %{ $statistics{$key} } ) ){
-			      if ($subkey =~ m/Number/) {
-				  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
-				  $all_stats{$subkey}+=$statistics{$key}{$subkey};
-			      }
-			  }
-		      }
-	           }
-		   foreach my $key (sort keys %all_stats){
-		       print $key.' = '.$all_stats{$key}."\n";
-		   }
+					foreach my $subkey (keys(%{$statistics{$key}})){
+							if ($subkey =~ m/Number/) {
+								  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
+								  $all_stats{$subkey}+=$statistics{$key}{$subkey};
+							}
+					  }
+				  }
+		  }
+				   foreach my $key (sort keys %all_stats){
+						print $key.' = '.$all_stats{$key}."\n";
+				  }
 				  
 				  
                   if ($something{"draw_html_report"} ==1 ){
@@ -4485,13 +4475,13 @@ sub find_and_print_CRISPRS {
       foreach  my $cut (@cuts) {
             my $json = read_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' } );
             %finished_CRISPR_hash = ( %finished_CRISPR_hash, %{ decode_json $json } );
-            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
+            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
             $json = read_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' } );
             my %sechash=%{ decode_json $json };
             foreach  my $seckey (keys(%sechash)){
                         $tempstatistics{$seckey}+=$sechash{$seckey};
             }
-            #unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
+            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
@@ -4625,7 +4615,7 @@ sub create_mygff{
            $line[8]=~m/gene_biotype \"(.+?)\"/;
            $note=$1;
            print $chrom_file_fasta ">$id locus_tag= $locus_tag;note= $note;chrom:".$line[0].":".$line[3]."..".$line[4]."\n$seqstr\n";
-           print $chrom_file_gff "gene_".$id."::".$locus_tag."\t".$line[3]."\t".$line[4]."\n";
+           print $chrom_file_gff "gene_".$id."::".$locus_tag."::".$line[6]."\t".$line[3]."\t".$line[4]."\n";
          }elsif($line[2]=~m/exon/){ #if feature is a start_codon, stop_codon, CDS or exon
            if($line[8]=~m/gene_id \"(.+?)\".*?transcript_id \"(\S+)\"\;.+?exon_number \"(\S+)\"\;/){ #store transcriptID and exonnumber
               print $chrom_file_gff $line[2]."::".$2."::".$3."::".$1."\t".$line[3]."\t".$line[4]."\n"; #print "feature::transcriptID::exonnumber\t[start]\t[end]
@@ -5278,3 +5268,4 @@ sub rndStr{ join"", @_[ map{ rand @_ } 1 .. shift ] };
 sub mock{};
 
 1; 
+
