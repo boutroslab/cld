@@ -67,7 +67,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.0','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.2','2015-09-01','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -379,7 +379,7 @@ if ($something{"GUI"}) {
 																	"purpose_exclusive"=>0,
 																	"downstream_window"=>50,
 																	"upstream_window"=>50,
-																	"number_of_CDS"=>1,
+																	"number_of_CDS"=>3,
 																	"minspacerlength"=>13,
 																	"maxspacerlength"=>19,
 																	"crispra_upstream"=>500,
@@ -1841,14 +1841,15 @@ sub calculate_CRISPR_score {
         $score{"CRISPRi"}=0;
         $score{"CRISPRa"}=0;
       my $expression="[";
-      if (($_[1]->{"number_of_CDS"}>0)) {
+      if (($_[1]->{"number_of_CDS"}>0) && ($_[1]->{"purpose_exclusive"}==1)) {
          foreach my $number(1..$_[1]->{"number_of_CDS"}){
             $expression.=$number;
             }
          $expression.="]";
       }else{
-             $expression="[.]";
+             $expression="\\d*?";
       }
+     
 	  if ( exists $_[0]->{$_[4]} ) { # check wethere the tree exists
             #search for annotations in the intervall from start (2) to end (3) and count them in score
             my $annotations = $_[0]->{$_[4]}->fetch( int($_[2]), int($_[3]) );            
@@ -1914,7 +1915,7 @@ sub calculate_CRISPR_score {
                 $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_upstream"}), int($_[3]+$_[1]->{"crispra_downstream"}) );     
             }
             foreach  my $anno ( @{$annotations} ) {
-                 if ( $anno =~ m/TSS_(\S+)_(\d+)_(\d+)/ ) {
+                 if ( $anno =~ m/TSS::\S+::(\S+)_(\d+)_(\d+)/ ) {
                     $tmp=$1;
                     if ($tmp=~m/$gene_name/) {
                         $score{"CRISPRa"}=1;
@@ -3330,7 +3331,7 @@ sub make_a_crispr_library{
                                     }
                               close $bowtie;
                               
-                              #unlink $temp_dir . "/temp_out.bwt";
+                              unlink $temp_dir . "/temp_out.bwt";
                               if ( $something{"sec_off_target"} ==1 ) { #ckeck if this is wanted
                                     ###############################################################################################################################################################
                                     
@@ -3353,9 +3354,9 @@ sub make_a_crispr_library{
                                                 }
                                           }
                                     close $bowtie;
-                                    #unlink $temp_dir . "/temp_out.bwt";
+                                    unlink $temp_dir . "/temp_out.bwt";
                               }
-                              #unlink $temp_dir . "/temp_CRISPRS.fasta";
+                              unlink $temp_dir . "/temp_CRISPRS.fasta";
                         }else{
                               
                               #####################################################################################################################################################################
@@ -3476,9 +3477,9 @@ sub make_a_crispr_library{
                                           }
                                     }
                               close $bowtie;
-                              #unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
-                              #unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
-                              #unlink $temp_dir . "/temp_out.bwt";
+                                unlink $temp_dir . "/temp_LEFTCRISPRS.fasta";
+                              unlink $temp_dir . "/temp_RIGHTCRISPRS.fasta";
+                              unlink $temp_dir . "/temp_out.bwt";
                               #####################################################################################################################################################################
                               #  if ( exists $something{"sec_off_target"} ) needed for double! @Florian
                               #####################################################################################################################################################################
@@ -4482,13 +4483,13 @@ sub find_and_print_CRISPRS {
       foreach  my $cut (@cuts) {
             my $json = read_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' } );
             %finished_CRISPR_hash = ( %finished_CRISPR_hash, %{ decode_json $json } );
-            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
+           unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
             $json = read_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' } );
             my %sechash=%{ decode_json $json };
             foreach  my $seckey (keys(%sechash)){
                         $tempstatistics{$seckey}+=$sechash{$seckey};
             }
-            unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
+           unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
