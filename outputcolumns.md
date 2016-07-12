@@ -1,5 +1,6 @@
-|Name|target site ID|
+|Column name|description|
 |----|--------------|
+|Name|target site ID|
 |Length|target length|
 |Start|target start with respect to the input sequence (gene -500 if a gene name was the input)|
 |End|target start with respect to the input sequence (gene -500 if a gene name was the input)|
