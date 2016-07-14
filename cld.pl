@@ -60,7 +60,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.2','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.3','2015-09-01','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -1851,12 +1851,13 @@ sub calculate_CRISPR_score {
             foreach  my $anno ( @{$annotations} ) {
                   if ( $anno =~ m/gene_(\S+)::([\+\-])_(\d+)_(\d+)/ ) {
                         $new_score[1]++;
-                        $tmp=$gene_tmp=$1;
+                        $tmp=$1;
                         $tmpstr=$2;
-						${ $score{"gene"} }{$tmp}++;
-						if ($tmp=~m/$gene_name/) {
-							${ $score{"this_gene"} }{$tmp}++;
-                            $strand=$tmpstr;
+                        ${ $score{"gene"} }{$tmp}++;
+                        if ($tmp=~m/$gene_name/) {
+                              ${ $score{"this_gene"} }{$tmp}++;
+                              $gene_tmp=$tmp;
+                              $strand=$tmpstr;
                         }           
                   } elsif ( $anno =~ m/exon::(\S+)::(\d+)::(\S+)\_(\d+)_(\d+)/) {
                         ${ $score{"exon"} }{$2}++;
@@ -1889,29 +1890,37 @@ sub calculate_CRISPR_score {
             
            
             if ($strand eq "+") {
-                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_downstream"}), int($_[3]+$_[1]->{"crispri_upstream"}) );     
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_downstream"}),
+                                                     int($_[3]+$_[1]->{"crispri_upstream"})
+                                                     );     
             }else{
-                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_upstream"}), int($_[3]+$_[1]->{"crispri_downstream"}) );     
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispri_upstream"}),
+                                                     int($_[3]+$_[1]->{"crispri_downstream"})
+                                                     );     
             }
             foreach  my $anno ( @{$annotations} ) {
                  if ( $anno =~ m/TSS::\S+::(\S+)_(\d+)_(\d+)/ ) {
                     $tmp=$1;
-                    if ($gene_tmp=~m/$tmp/) {
+                    #if ($gene_tmp=~m/$tmp/) {
                         $score{"CRISPRi"}=1;
-                    }           
+                    #}           
               }
             }
            if ($strand eq "+") {
-                 $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_downstream"}), int($_[3]+$_[1]->{"crispra_upstream"}) );     
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_downstream"}),
+                                                     int($_[3]+$_[1]->{"crispra_upstream"})
+                                                     );     
             }else{
-                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_upstream"}), int($_[3]+$_[1]->{"crispra_downstream"}) );     
+                $annotations = $_[0]->{$_[4]}->fetch( int($_[2]-$_[1]->{"crispra_upstream"}),
+                                                     int($_[3]+$_[1]->{"crispra_downstream"})
+                                                     );     
             }
             foreach  my $anno ( @{$annotations} ) {
                  if ( $anno =~ m/TSS::\S+::(\S+)_(\d+)_(\d+)/ ) {
                     $tmp=$1;
-                    if ($tmp=~m/$gene_name/) {
+                    #if ($gene_tmp=~m/$tmp/) {
                         $score{"CRISPRa"}=1;
-                    }           
+                    #}           
               }
             }
             #search for the start and stop coddon in the intervall from start (2) to end (3) with an up/downstream window
@@ -2475,7 +2484,7 @@ sub filter_library{
 		}		
 	}
 
-    $lib_name=$lib_name."."."1.0.0".".".$coverage.".".scalar(keys(%id_for_lib)).".".$general_coverage;
+    $lib_name=$lib_name."."."1.1.3".".".$coverage.".".scalar(keys(%id_for_lib)).".".$general_coverage;
     open (my $libtab_out, ">", $output_dir.$lib_name.".tab") or die $!;
     open (my $libfa_out, ">", $output_dir.$lib_name.".fasta") or die $!;
     open ($libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
@@ -4095,16 +4104,24 @@ sub make_a_crispr_library{
                   if (defined $something{"GUI"}) {$mw->update;};
                   } #end Sequence loop
 				  my %all_stats;
-                  foreach my $key (keys %statistics){
-		      if( $statistics{$key} =~m/[a-zA-Z]+/){
-					foreach my $subkey (keys(%{$statistics{$key}})){
-							if ($subkey =~ m/Number/) {
-								  #print $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
-								  $all_stats{$subkey}+=$statistics{$key}{$subkey};
-							}
-					  }
-				  }
-		  }
+                  open( my $missing_log, ">", "missing_log.txt") or die $!;
+                    foreach my $key (keys %statistics){
+                        if( $statistics{$key} =~m/[a-zA-Z]+/){
+                            if ($statistics{$key}{"Number of successful designs"}==0) {
+                                print $missing_log 'Query name: '.$statistics{$key}{"seq_name"}.'   Query length: '.$statistics{$key}{"seq_length"}.'   Query location: '.$statistics{$key}{"seq_location"}."\n";
+                            
+                            }
+                            foreach my $subkey (sort keys(%{$statistics{$key}})){
+                                if ($subkey =~ m/Number/) {
+                                    if ($statistics{$key}{"Number of successful designs"}==0) {
+                                        print $missing_log $key."\t".$subkey.' = '.$statistics{$key}{$subkey}."\n";
+                                    }
+                                    $all_stats{$subkey}+=$statistics{$key}{$subkey};
+                                }
+                            }
+                        }
+                    }
+                    close($missing_log);
 				   foreach my $key (sort keys %all_stats){
 						print $key.' = '.$all_stats{$key}."\n";
 				  }
@@ -4182,7 +4199,7 @@ sub find_and_print_CRISPRS {
       my $parallel_number           = $_[6];
       my %something                 = %{ $_[7] };
       my $seq_obj                   = $$seq_obj_ref;
-	  my $gene_id					= $seq_obj->id;
+	  my $gene_id					= $seq_obj->display_id;
       my $whole_seq                 = $seq_obj->seq;
       my $count                     = 0;
       my %finished_CRISPR_hash      = ();
