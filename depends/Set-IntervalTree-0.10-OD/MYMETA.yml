@@ -3,19 +3,20 @@ abstract: 'Perform range-based lookups on sets of ranges.'
 author:
   - 'Ben Booth <benbooth@gmail.com>'
 build_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
 configure_requires:
-  ExtUtils::MakeMaker: 0
+  ExtUtils::MakeMaker: '0'
 dynamic_config: 0
-generated_by: 'ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.120921, CPAN::Meta::Converter version 2.133380'
+generated_by: 'ExtUtils::MakeMaker version 6.66, CPAN::Meta::Converter version 2.120921, CPAN::Meta::Converter version 2.150005'
 license: unknown
 meta-spec:
   url: http://module-build.sourceforge.net/META-spec-v1.4.html
-  version: 1.4
+  version: '1.4'
 name: Set-IntervalTree
 no_index:
   directory:
     - t
     - inc
 requires: {}
-version: 0.08
+version: '0.08'
+x_serialization_backend: 'CPAN::Meta::YAML version 0.016'
