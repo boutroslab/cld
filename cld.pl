@@ -60,7 +60,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.1.3','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.2.0','2015-09-01','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -4331,7 +4331,12 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"length"} = $temp[1];
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
-                                          my %score = calculate_CRISPR_score(\%trees, \%something, $start,  $end , $chrom, 1, \@new_score,$gene_id);
+                                          if(${ $CRISPR_hash{$name} }{"strand"} == "plus"){
+                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score,$gene_id);
+                                          }else{
+                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($start-5), ($start-5), $chrom, 1, \@new_score,$gene_id);
+                                          }
+                                          
                                           
                                           #############################################################################################################################################
                                           #Statistics
