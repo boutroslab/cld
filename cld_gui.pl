@@ -67,7 +67,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.2.0','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.3.0','2015-11-24','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -4339,11 +4339,14 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"length"} = $temp[1];
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
-                                        if(${ $CRISPR_hash{$name} }{"strand"} == "plus"){
-                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score,$gene_id);
+                                          my %scoring ;
+                                          if(${ $CRISPR_hash{$name} }{"strand"} == "plus"){
+                                            %scoring = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score,$gene_id);
                                           }else{
-                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($start-5), ($start-5), $chrom, 1, \@new_score,$gene_id);
+                                            %scoring = calculate_CRISPR_score(\%trees, \%something, ($start-5), ($start-5), $chrom, 1, \@new_score,$gene_id);
                                           }
+                                          
+                                          
                                           #############################################################################################################################################
                                           #Statistics
                                           #############################################################################################################################################
@@ -4353,11 +4356,12 @@ sub find_and_print_CRISPRS {
                                                 ${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
                                           }
                                           
-                                          %{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
+                                          %{ ${ $CRISPR_hash{$name} }{"context"} } = %scoring;
                                           ${ $CRISPR_hash{$name} }{"nucseq"} = $crisprseq;
                                          
                                           $count++;
-                                          if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+                                          
+                                          if (make_CRISPR_statistics(\%something, \%scoring, $dont_asses_context, \%tempstatistics) == 1){
                                                 delete $CRISPR_hash{$name};
                                           }
                                           #############################################################################################################################################
@@ -4448,13 +4452,14 @@ sub find_and_print_CRISPRS {
                                                 ${ $CRISPR_hash{$name} }{"length"} =  $length+$spacerlength+$length+2 + 2;
                                                 my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
                                                 my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
+                                                my %scoring;
+                                                 %scoring = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
                                                 
                                                 #######################################################################################################################################
                                                 #Statistics
                                                 #######################################################################################################################################
                                                 
-                                                if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+                                                if (make_CRISPR_statistics(\%something, \%scoring, $dont_asses_context, \%tempstatistics) == 1){
                                                       delete $CRISPR_hash{$name};
                                                       next LENGTHLOOP;
                                                 }
@@ -4513,6 +4518,7 @@ sub find_and_print_CRISPRS {
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
+
 
 
 

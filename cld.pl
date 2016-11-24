@@ -60,7 +60,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.2.0','2015-09-01','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.3.0','2015-11-24','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -1849,11 +1849,11 @@ sub calculate_CRISPR_score {
             my $gene_tmp;
             my $tmpstr;
             foreach  my $anno ( @{$annotations} ) {
-                  if ( $anno =~ m/gene_(\S+)::([\+\-])_(\d+)_(\d+)/ ) {
+                if ( $anno =~ m/gene_(\S+)::([\+\-])_(\d+)_(\d+)/ ) {
                         $new_score[1]++;
                         $tmp=$1;
                         $tmpstr=$2;
-                        ${ $score{"gene"} }{$tmp}++;
+                        ${ $score{"gene"} }{$tmp}++;                        
                         if ($tmp=~m/$gene_name/) {
                               ${ $score{"this_gene"} }{$tmp}++;
                               $gene_tmp=$tmp;
@@ -1978,11 +1978,11 @@ sub make_CRISPR_statistics {
             $_[3]->{"Number of designs excluded because they were not located at the stop codon"}++;
             return 1;
       }
-		if ( exists $_[0]->{"purpose_exclusive"} && ($_[0]->{"purpose"} eq "CRISPRa") && $_[1]->{"CRISPRa"}!=1 && $_[2] != 1 ) {
+		if ( $_[0]->{"purpose_exclusive"} ==1 && ($_[0]->{"purpose"} eq "CRISPRa") && $_[1]->{"CRISPRa"}!=1 && $_[2] != 1 ) {
             $_[3]->{"Number of designs excluded because they were not amenable for CRISPRa"}++;
             return 1;
       }
-      if ( exists $_[0]->{"purpose_exclusive"} && ($_[0]->{"purpose"} eq "CRISPRi") && $_[1]->{"CRISPRi"}!=1 && $_[2] != 1 ) {
+      if ( $_[0]->{"purpose_exclusive"} ==1 && ($_[0]->{"purpose"} eq "CRISPRi") && $_[1]->{"CRISPRi"}!=1 && $_[2] != 1 ) {
             $_[3]->{"Number of designs excluded because they were not amenable for CRISPRi"}++;
             return 1;
       }
@@ -3065,6 +3065,7 @@ sub make_a_crispr_library{
             my $chrom               = ""; #create an empty name chromosome
             my $location_offset     = 0;
             my $location_end        = 0; #set the location offset value to 0
+            print $seq_obj->description , "\n";
             if ( ( $seq_obj->description ) =~ m/chrom:([\w\.]+):(\d+)..(\d+)/ig) { #if the descrition of the sequence contains information of the form loc=chr1:0..13000000
                   #print the result of the pattern matching
                   $chrom = $1; #save the location information in the certain objects
@@ -3073,6 +3074,7 @@ sub make_a_crispr_library{
                   if ( !exists $trees{$chrom} ) {
                         $trees{$chrom} = build_tree( $something{"databasepath"} . $something{"ref_organism"} . "/" . $chrom . "_indexed" );
                   }
+                    $dont_asses_context = 0;
             } else {
                   $dont_asses_context = 1;
             }
@@ -4155,7 +4157,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
                                     }elsif(($filename=~m/\.gff/) && !($filename=~m/all_results_together\.gff/)){
                                           open (my $file, "<", $temp_dir."/".$filename);
                                                 while (<$file>){
@@ -4168,7 +4170,9 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
+                                    }elsif($filename=~m/\.zip/){
+                                          unlink $temp_dir."/".$filename;
                                     }
                               }
                         close $outgff;     
@@ -4331,10 +4335,11 @@ sub find_and_print_CRISPRS {
                                           ${ $CRISPR_hash{$name} }{"length"} = $temp[1];
                                           my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset;
                                           my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset;
+                                          my %scoring ;
                                           if(${ $CRISPR_hash{$name} }{"strand"} == "plus"){
-                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score,$gene_id);
+                                            %scoring = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 1, \@new_score,$gene_id);
                                           }else{
-                                            my %score = calculate_CRISPR_score(\%trees, \%something, ($start-5), ($start-5), $chrom, 1, \@new_score,$gene_id);
+                                            %scoring = calculate_CRISPR_score(\%trees, \%something, ($start-5), ($start-5), $chrom, 1, \@new_score,$gene_id);
                                           }
                                           
                                           
@@ -4347,11 +4352,12 @@ sub find_and_print_CRISPRS {
                                                 ${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
                                           }
                                           
-                                          %{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
+                                          %{ ${ $CRISPR_hash{$name} }{"context"} } = %scoring;
                                           ${ $CRISPR_hash{$name} }{"nucseq"} = $crisprseq;
                                          
                                           $count++;
-                                          if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+                                          
+                                          if (make_CRISPR_statistics(\%something, \%scoring, $dont_asses_context, \%tempstatistics) == 1){
                                                 delete $CRISPR_hash{$name};
                                           }
                                           #############################################################################################################################################
@@ -4442,13 +4448,14 @@ sub find_and_print_CRISPRS {
                                                 ${ $CRISPR_hash{$name} }{"length"} =  $length+$spacerlength+$length+2 + 2;
                                                 my $start = ${ $CRISPR_hash{$name} }{"start"} + $location_offset - 500;
                                                 my $end = ${ $CRISPR_hash{$name} }{"end"} + $location_offset - 500;
-                                                my %score = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
+                                                my %scoring;
+                                                 %scoring = calculate_CRISPR_score(\%trees, \%something, ($end-5), ($end-5), $chrom, 0, \@new_score, $gene_id);
                                                 
                                                 #######################################################################################################################################
                                                 #Statistics
                                                 #######################################################################################################################################
                                                 
-                                                if (make_CRISPR_statistics(\%something, \%score, $dont_asses_context, \%tempstatistics) == 1){
+                                                if (make_CRISPR_statistics(\%something, \%scoring, $dont_asses_context, \%tempstatistics) == 1){
                                                       delete $CRISPR_hash{$name};
                                                       next LENGTHLOOP;
                                                 }
