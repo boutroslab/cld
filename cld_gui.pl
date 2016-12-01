@@ -57,7 +57,7 @@ print "Starting X11...\n";
     die;
 }
 
-#open(my $debug_log, ">", "debug_log.txt") or die $!;
+
 
 my $procs = new Unix::Processors;
 my $max_parallel= my $parallel_number =$procs->max_online;
@@ -67,7 +67,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.3.0','2015-11-24','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.3.1','2015-11-24','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -3260,19 +3260,13 @@ sub make_a_crispr_library{
                                           my @line = split( "\t", $line );
                                           
                                           if ($line[2] eq "*") {
-                                                if($line[0] =~m/^([^_]+)_(\d+)_(\d+)_\d+$/){
-                                                    $id=$1."_".$2."_".$3;
-                                                    $seq=$1;
-                                               }elsif($line[0] =~m/^([^_]+)_(\d+)_(\d+)$/){
+                                                if($line[0] =~m/^(\S+?)_(\d+)_(\d+)$/){
                                                    $id=$1."_".$2."_".$3;
                                                     $seq=$1;
                                                }
                                                 ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$line[2]."§§0§§0§§NA§§0§§NA";
                                           }else{
-                                            if($line[0] =~m/^([^_]+)_(\d+)_(\d+)_\d+$/){
-                                                 $id=$1."_".$2."_".$3;
-                                                  $seq=$1;
-                                            }elsif($line[0] =~m/^([^_]+)_(\d+)_(\d+)$/){
+                                            if($line[0] =~m/^(\S+?)_(\d+)_(\d+)$/){
                                                 $id=$1."_".$2."_".$3;
                                                  $seq=$1;
                                             }
@@ -3285,7 +3279,7 @@ sub make_a_crispr_library{
                                                       if ($line[1] == 0 || $line[1] == 256) {
                                                             $direction = "fw";
                                                       }
-                                                      if ( $line[0] =~ m/([^_]+_[^_]+_[^_]+)/ig ) {
+                                                      if ( $line[0] =~ m/(\S+?_[^_]+_[^_]+)$/ig ) {
                                                             my @matchstringo=make_mismatch_string (\$line,$something{"unspecific_leading_bases"}, $direction);
                                                             my $cond=0;
                                                             if ($something{"PAM_location"} eq "3_prime") {
@@ -3319,12 +3313,12 @@ sub make_a_crispr_library{
                                                                         }
                                                                         my $annotations = $trees{$line[2]}->fetch( int($line[3]), int(($line[3])) );
                                                                         foreach  my $anno ( @{$annotations} ) {
-                                                                              if ( $anno =~ m/gene_(\S+)_([0-9]+)_([0-9]+)/ ) {
+                                                                              if ( $anno =~ m/gene_(\S+?)_([0-9]+)_([0-9]+)/ ) {
                                                                                     $namestuff=$1;
                                                                                     #$startcoordinate=$2;
                                                                               }
                                                                         }
-                                                                       if ($namestuff eq "" && $something{"ignore_intergenic"} ==1) {                                                                              
+                                                                    if ($namestuff eq "" && $something{"ignore_intergenic"} ==1) {                                                                              
                                                                         }elsif($namestuff ne ""){
                                                                               ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$namestuff."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
                                                                         }elsif($namestuff eq "" && $something{"ignore_intergenic"} eq 0){
@@ -3355,7 +3349,7 @@ sub make_a_crispr_library{
                                                       $edit_distance=$1;
                                                 }
                                                 if (($edit_distance <= $something{"edit_distance_allowed"}) && ($line[2] ne "*")) {
-                                                      if ( $line[0] =~ m/([^_]+)_([^_]+)_([^_]+)/ ) {
+                                                      if ( $line[0] =~ m/(\S+?)_([^_]+)_([^_]+)$/ ) {
                                                             my $key = $1."_".$2."_".$3;
                                                             my $seq = $1;
                                                             push @{ ${ ${ $CRISPR_hash{$seq} } {$key} }{"sec_hits"} }, $line[2];
@@ -3363,7 +3357,7 @@ sub make_a_crispr_library{
                                                 }
                                           }
                                     close $bowtie;
-                                    unlink $temp_dir . "/temp_out.bwt";
+                                 unlink $temp_dir . "/temp_out.bwt";
                               }
                               unlink $temp_dir . "/temp_CRISPRS.fasta";
                         }else{
@@ -3412,7 +3406,7 @@ sub make_a_crispr_library{
                                                 if ($line[1]==97 || $line[1]==99 || $line[1]==355 || $line[1]==161 || $line[1]==163 || $line[1]==419)  {
                                                       $direction        = "rc";
                                                 }
-                                                if ( $line[0] =~ m/([^_]+_[^_]+_[^_]+)/ig ) {
+                                                if ( $line[0] =~ m/(\S+?_[^_]+_[^_]+)/ig ) {
                                                       $line[0] =~m/(\S+)_(\S+)_/;
                                                       my $seq = $1;
                                                       my @matchstringo=make_mismatch_string (\$line,$something{"unspecific_leading_bases"}, $direction);
@@ -3498,7 +3492,7 @@ sub make_a_crispr_library{
                   ###########################################################################################################################################################################
                   #Evaluate the infos of the CRISPR-Hash (additional information, changes)
                   ###########################################################################################################################################################################
-                  
+                  #open(my $debug_log, ">", "debug_log.txt") or die $!;
                   my $number_of_hits = 1;
                   SEQLOOP: foreach my $fname ( keys(%CRISPR_hash) ) {
                         CRISPRHASHLOOP: foreach my $key ( keys(%{$CRISPR_hash{$fname}}) ) {
@@ -3506,8 +3500,8 @@ sub make_a_crispr_library{
                                     $number_of_hits = scalar(split(";;",${ ${ $CRISPR_hash{$fname} } {$key} }{"hits"}));
                                     ${ ${ $CRISPR_hash{$fname} } {$key} }{"number_of_hits"} = $number_of_hits-1;
                                     if (( $number_of_hits > $something{"off-targets-allowed"} + 2 || $number_of_hits < 1 ) ) {
-                                          delete $CRISPR_hash{$fname}{$key};
                                           $statistics{$fname}{"Number of designs excluded because they hit multiple targets or none"}++;
+                                          delete $CRISPR_hash{$fname}{$key};
                                           next CRISPRHASHLOOP;
                                     }else{
                                           $statistics{$fname}{"Number of designs that hit a specific target"}++;
@@ -3533,13 +3527,13 @@ sub make_a_crispr_library{
                                     }
                               }
                               
-                              my $whole_crisp_seq = "";
+                              my $whole_crisp_seq = "A";
                               
                               if($something{"kind"} ne "single"){
                                     $whole_crisp_seq = join( "", @{${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"}});
                               }else{
                                     $whole_crisp_seq = ${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"};
-                              }
+                              }                              
                               ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"} = join( " ", my @basecomp = find_base_count( $whole_crisp_seq ) ); #store the nucleotide composition as a string object in the hash
                               ${ ${ $CRISPR_hash{$fname} } {$key} }{"score"} = 120;
                               ${ ${ $CRISPR_hash{$fname} } {$key} }{"exon"} = join( "_", keys( %{ ${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} } {"exon"} } ) );
@@ -3556,7 +3550,7 @@ sub make_a_crispr_library{
                               }
                         }
                   }
-                  
+                  #close($debug_log);
                   #################################################################################################################################################################################
                   #reopen the main loop which is looping through the sequence found in the SeqIO object, may be one or many more
                   #################################################################################################################################################################################
@@ -4163,7 +4157,7 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
                                     }elsif(($filename=~m/\.gff/) && !($filename=~m/all_results_together\.gff/)){
                                           open (my $file, "<", $temp_dir."/".$filename);
                                                 while (<$file>){
@@ -4176,7 +4170,9 @@ sub make_a_crispr_library{
                                                       }
                                                 }
                                           close $file;
-                                          #unlink $temp_dir."/".$filename;
+                                          unlink $temp_dir."/".$filename;
+                                    }elsif($filename=~m/\.zip/){
+                                          unlink $temp_dir."/".$filename;
                                     }
                               }
                         close $outgff;     
@@ -4469,7 +4465,7 @@ sub find_and_print_CRISPRS {
                                                       ${ ${ $CRISPR_hash{$name} }{"homology"} }{"right"} = substr( $whole_seq, ${ $CRISPR_hash{$name} }{"end"}, $something{"right_homology"} );
                                                 }
                                                 
-                                                %{ ${ $CRISPR_hash{$name} }{"context"} } = %score;
+                                                %{ ${ $CRISPR_hash{$name} }{"context"} } = %scoring;
                                                 @{${ $CRISPR_hash{$name} }{"nucseq"}} = ($left_taleseq,$right_taleseq);
                                                 ${ $CRISPR_hash{$name} }{"strand"} = "plus";
                                                 $count++;

@@ -10,3 +10,4 @@
 |v1.3.0|+   fixed error in version 1.2 where filter criteria like exons were not interpreted |
 | |+   enabled automated deletion of single gene files in the server appliation so only the usmmary is kept|
 | |+   fixed all binary builds |
+|v1.3.1|+   fixed error in version 1.3.0 where gene names with underscores caused major trouble |
