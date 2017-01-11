@@ -19,8 +19,8 @@
 |Doench-Score|Efficacy score as introduced by Doench et al. 2014 Nat. Biotech.|
 |Xu-Score|Efficacy score as introduced by Xu et al. 2015 Gen.Res.|
 |Target|target genes by remapping the target site|
-|Match-start|alignment start with respect to the estimate target gene|
-|Match-end|alignment end with respect to the estimate target gene|
+|Match-start|alignment start with respect to the estimate target chromosome|
+|Match-end|alignment end with respect to the estimate target chromosome|
 |Matchstring|alignment representation "M" for match "X" for mismatch "I" for insertion "D" for deletion|
 |Editdistance|estimated edit distance of the alignment (X+I+D)|
 |Number of Hits|estimate number of target sites in the respective genome with the off-target parameters specified|
