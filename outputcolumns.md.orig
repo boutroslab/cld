@@ -1,0 +1,61 @@
+|Column|Heading|Meaning|
+|---|------|--------|
+|0|Name|target site ID|
+|1|Length|target length|
+|2|Chromosome|target chromosome|
+|3|Start|target start relative to the chromosome|
+|4|End|target end relative to the chromosome|
+|5|Strand|strand it will target|
+|6|Nucleotide sequence|target site nucleotide composition of the form target_PAM|
+|7|Gene Name|ID::GENE::STRAND|
+|8|Transcripts|ENSEMBL transcript Ids overlapping with the target site "_"-separated|
+|9|Transcript:: Exon|ENSEMBL transcript::exon Ids overlapping with the target site|
+|10|Number of Cpg Islands hit|Number of Cpg Islands overlapping with the target site|
+|11|Sequence around the cutside|if it is chosen to save a recombination matrix ist sequence is here|
+|12|%A %C %T %G|nucleotide compositions in per cent|
+|13|S-Score|specificity score|
+|14|A-Score|annotation score|
+|15|Custom-Score|by default the score from Doench et al. 2014 else the score deviated from the custom Perl scoring script|
+|16|Doench-Score|Efficacy score as introduced by Doench et al. 2014 Nat. Biotech.|
+|17|Xu-Score|Efficacy score as introduced by Xu et al. 2015 Gen.Res.|
+|18|percent of total transcripts hit|per cent of transcripts of the targeted gene being hit by that putative sgRNA|
+|19|Match-Target|target genes found by remapping the target site|
+|20|Match-Chromosome|target chromosome found by remapping the target site|
+|21|Match-Start|alignment start with respect to the estimate target chromosome|
+|22|Match-End|alignment end with respect to the estimate target chromosome|
+|23|Matchstring|alignment representation "M" for match "X" for mismatch "I" for insertion "D" for deletion|
+|24|Editdistance|estimated edit distance of the alignment (X+I+D, sum of all deletions, insertions or exchanges neccessary to edit the matched sequence to the target sequence)|
+|25|Number of Hits|estimated number of target sites in the respective genome with the off-target parameters specified|
+|26|Direction|strandedness of the target alignment|
+|27|Start_rti|target start with respect to the estimate target gene|
+|28|End_rti|target end with respect to the estimate target gene|
+=======
+|Column name|description|
+|----|--------------|
+|Name|target site ID|
+|Length|target length|
+|Start|target start with respect to the target chromosome|
+|End|target end with respect to the target chromosome|
+|Strand|strand it will target|
+|Nucleotide sequence|target site nucleotide composition of the form target_PAM|
+|Gene Name|ID::GENE|
+|Transcripts|ENSEMBL transcript Ids overlapping with the target site|
+|Transcript:: Exon|ENSEMBL transcript::exon Ids overlapping with the target site|
+|Number of Cpg Islands hit|Number of Cpg Islands overlapping with the target site|
+|Sequence around the cutside|if it is chosen to save a recombination matrix ist sequence is here|
+|%A %C %T %G|nucleotide compositions in per cent|
+|S-Score|specificity score|
+|A-Score|annotation score|
+|Custom-Score|by default the score from Doench et al. 2014 else the score deviated from the custom Perl scoring script|
+|percent of total transcripts hit|per cent of transcripts of the targeted gene being hit by that putative sgRNA|
+|Doench-Score|Efficacy score as introduced by Doench et al. 2014 Nat. Biotech.|
+|Xu-Score|Efficacy score as introduced by Xu et al. 2015 Gen.Res.|
+|Target|target genes by remapping the target site|
+|Match-start|alignment start with respect to the estimate target chromosome|
+|Match-end|alignment end with respect to the estimate target chromosome|
+|Matchstring|alignment representation "M" for match "X" for mismatch "I" for insertion "D" for deletion|
+|Editdistance|estimated edit distance of the alignment (X+I+D)|
+|Number of Hits|estimate number of target sites in the respective genome with the off-target parameters specified|
+|Direction|strandedness of the target alignment|
+
+>>>>>>> 44a324487a0902a6a48a4c8e32c3c29a10e0ddd9
