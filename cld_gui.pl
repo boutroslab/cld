@@ -56,8 +56,7 @@ print "Starting X11...\n";
 }else{
     die;
 }
-
-
+#open(my $debug_log, ">", "debug_log.txt") or die $!;
 
 my $procs = new Unix::Processors;
 my $max_parallel= my $parallel_number =$procs->max_online;
@@ -67,7 +66,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.3.1','2015-11-24','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.0','2017-01-19','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -80,14 +79,12 @@ my(
     $annotation_options_page,
     $chk_CDS_only,
     $chk_CpG_exclusive,
-    $chk_draw_html_report,
     $annonymous_funct,
     $chk_exclude_overlapping_genes,
     $chk_exon_exclusive,
     $chk_gene_exclusive,
     $chk_ignore_intergenic,
     $chk_ignore_missing_id,
-    $chk_match_info,
     $chk_out_gff,
     $chk_purpose_exclusive,
     $chk_retrieve_recomb_matrix,
@@ -182,6 +179,7 @@ my(
 );
 
 $something{"GUI"}=1;
+
 ###################################################################################################################################################################################################
 # read in command line options
 ###################################################################################################################################################################################################
@@ -332,7 +330,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>1,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>40,
 																	"purpose_exclusive"=>1,
 																	"downstream_window"=>50,
@@ -374,7 +371,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>1,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>40,
 																	"purpose_exclusive"=>0,
 																	"downstream_window"=>50,
@@ -416,7 +412,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>0,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>400,
 																	"purpose_exclusive"=>0,
 																	"downstream_window"=>500,
@@ -460,7 +455,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>1,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>40,
 																	"purpose_exclusive"=>1,
 																	"downstream_window"=>50,
@@ -505,7 +499,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>1,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>40,
 																	"purpose_exclusive"=>1,
 																	"downstream_window"=>50,
@@ -550,7 +543,6 @@ if ($something{"GUI"}) {
 																	"ignore_missing_id"=>1,
 																	"kind"=>"single",
 																	"match_info"=>0,
-																	"draw_html_report"=>0,
 																	"max_per_exon"=>400,
 																	"purpose_exclusive"=>1,
 																	"downstream_window"=>50,
@@ -606,7 +598,6 @@ if ($something{"GUI"}) {
 				$something{"ignore_missing_id"}=1									;#
 			#	$something{"kind"}="single"											;#
 				$something{"match_info"}=0											;#
-				$something{"draw_html_report"}=0									;#
 				$something{"max_per_exon"}=4000										;#
 				$something{"out_gff"}=1												;#
 				
@@ -1530,14 +1521,6 @@ if ($something{"GUI"}) {
 																				   -text=>"ignore if ids could not be found",	#the button's text
 																				   -variable=>\$something{"ignore_missing_id"}
 																   );
-					$chk_match_info = $io_options_frame 		-> Checkbutton(
-																				   -text=>"print match details in html output",	#the button's text
-																				   -variable=>\$something{"match_info"}
-																   );
-					$chk_draw_html_report = $io_options_frame 		-> Checkbutton(
-																				   -text=>"print html output",	#the button's text
-																				   -variable=>\$something{"draw_html_report"}
-																   );
 					$chk_out_gff = $io_options_frame 		-> Checkbutton(
 																				   -text=>"print gff output",	#the button's text
 																				   -variable=>\$something{"out_gff"}
@@ -1548,9 +1531,7 @@ if ($something{"GUI"}) {
 					$lab_output_dir             -> grid(-row=>2,-column=>1,-sticky=>"nw");	#make the button to trigger the file choosing function
 					$output_dir_entry           -> grid(-row=>2,-column=>2,-sticky=>"nw");
 					$chk_ignore_missing_id		-> grid(-row=>3,-column=>1,-sticky=>"nw");
-					$chk_match_info		 		-> grid(-row=>3,-column=>2,-sticky=>"nw");
-					$chk_draw_html_report		-> grid(-row=>4,-column=>1,-sticky=>"nw");
-					$chk_out_gff		 		-> grid(-row=>4,-column=>2,-sticky=>"nw");
+					$chk_out_gff		 		-> grid(-row=>4,-column=>1,-sticky=>"nw");
 					#$scl_max_per_exon		 	-> grid(-row=>5,-column=>1,-columnspan=>2,-sticky=>"nw");
 					#specific options
 					$specific_options_page=$end_to_end->add('page7', -label => 'Specific Options');
@@ -1986,11 +1967,11 @@ sub make_CRISPR_statistics {
             $_[3]->{"Number of designs excluded because they were not located at the stop codon"}++;
             return 1;
       }
-		if ( exists $_[0]->{"purpose_exclusive"} && ($_[0]->{"purpose"} eq "CRISPRa") && $_[1]->{"CRISPRa"}!=1 && $_[2] != 1 ) {
+		if ( $_[0]->{"purpose_exclusive"} ==1 && ($_[0]->{"purpose"} eq "CRISPRa") && $_[1]->{"CRISPRa"}!=1 && $_[2] != 1 ) {
             $_[3]->{"Number of designs excluded because they were not amenable for CRISPRa"}++;
             return 1;
       }
-      if ( exists $_[0]->{"purpose_exclusive"} && ($_[0]->{"purpose"} eq "CRISPRi") && $_[1]->{"CRISPRi"}!=1 && $_[2] != 1 ) {
+      if ( $_[0]->{"purpose_exclusive"} ==1 && ($_[0]->{"purpose"} eq "CRISPRi") && $_[1]->{"CRISPRi"}!=1 && $_[2] != 1 ) {
             $_[3]->{"Number of designs excluded because they were not amenable for CRISPRi"}++;
             return 1;
       }
@@ -2421,14 +2402,14 @@ sub filter_library{
         @line=split("\t",$_);
 		if($line[0]=~m/(\S+)_\d+_\d+$/){
 			$gene_name=$1;
-			my @transcripts=split("_",$line[7]);
+			my @transcripts=split("_",$line[8]);
 			foreach my $trans (@transcripts){
 				${${$ids{$gene_name}}{$trans}}{$line[0]}++;
 			}
-			${${$id_with_info{$gene_name}}{$line[0]}}{"anno_score"}=$line[16];
-			${${$id_with_info{$gene_name}}{$line[0]}}{"spec_score"}=$line[15];
-			${${$id_with_info{$gene_name}}{$line[0]}}{"custom_score"}=$line[17];
-			${${$id_with_info{$gene_name}}{$line[0]}}{"seq"}=$line[5];
+			${${$id_with_info{$gene_name}}{$line[0]}}{"anno_score"}=$line[14];
+			${${$id_with_info{$gene_name}}{$line[0]}}{"spec_score"}=$line[13];
+			${${$id_with_info{$gene_name}}{$line[0]}}{"custom_score"}=$line[15];
+			${${$id_with_info{$gene_name}}{$line[0]}}{"seq"}=$line[6];
 		}
 	}
 	close $libtab;
@@ -2492,7 +2473,7 @@ sub filter_library{
 		}		
 	}
 
-    $lib_name=$lib_name."."."1.1.3".".".$coverage.".".scalar(keys(%id_for_lib)).".".$general_coverage;
+    $lib_name=$lib_name.".".$script_version.".".$coverage.".".scalar(keys(%id_for_lib)).".".$general_coverage;
     open (my $libtab_out, ">", $output_dir.$lib_name.".tab") or die $!;
     open (my $libfa_out, ">", $output_dir.$lib_name.".fasta") or die $!;
     open ($libtab, "<", $temp_dir . "/all_results_together.tab") or die $!;
@@ -2506,19 +2487,19 @@ sub filter_library{
 					if (!exists($fasta{$line[0]})) {
 						print $libtab_out $_;
 						if ($correct_five_prime ==1) {
-							if ($line[5]=~m/\w(\w+)\s[NACGT]+_\w(\w+)\s[NACGT]+/) {
+							if ($line[6]=~m/\w(\w+)\s[NACGT]+_\w(\w+)\s[NACGT]+/) {
 								print $libfa_out ">".$line[0]."_left\n".$five_prime_extension."G".$1."$three_prime_extension\n";
 								print $libfa_out ">".$line[0]."_right\n".$five_prime_extension."G".$2."$three_prime_extension\n";
 							}else{
-								$line[5]=~m/\w(\w+)\s\w+/;
+								$line[6]=~m/\w(\w+)\s\w+/;
 								print $libfa_out ">".$line[0]."\n".$five_prime_extension."G".$1."$three_prime_extension\n";
 							}
 						}else{
-							if ($line[5]=~m/(\w+)\s[NACGT]+_(\w+)\s[NACGT]+/) {
+							if ($line[6]=~m/(\w+)\s[NACGT]+_(\w+)\s[NACGT]+/) {
 								print $libfa_out ">".$line[0]."_left\n".$five_prime_extension.$1."$three_prime_extension\n";
 								print $libfa_out ">".$line[0]."_right\n".$five_prime_extension.$2."$three_prime_extension\n";
 							}else{
-								$line[5]=~m/(\w+)\s\w+/;
+								$line[6]=~m/(\w+)\s\w+/;
 								print $libfa_out ">".$line[0]."\n"."$five_prime_extension".$1."$three_prime_extension\n";
 							}
 						
@@ -3032,26 +3013,11 @@ sub make_a_crispr_library{
             $seqio_obj = Bio::SeqIO->new( -file => $temp_dir . "/tempfile.fasta", -format => "fasta" ); #read the temporary fasta file
 		}
       #################################################################################################################################################################################
-      # Start the creation of the report (index.html)
+      # Start the creation of the report 
       #################################################################################################################################################################################
       #define empty object to be filled in the process
       my $fname               = "";
       my $dont_asses_context  = 0;
-      if ($something{"draw_html_report"} ==1 ){
-        open( my $report, ">", "$temp_dir/index.html" ) or die "can not open report file";
-                    print $report '<!DOCTYPE html>
-										<html lang="enc">
-										<head>
-										<meta http-equiv="Content-Type" content="text/html;charset=utf-8">
-										<title>cld Results</title><tr><td><br><br>
-                                 <a href="all_results_together.tab" target="_blank" download="all_results_together.tab"><input type="button" align="center" value="Download a tabular report for all query sequences together"></a>
-                                 <br><br>';
-		  if(-e "$temp_dir/index.html"){ print $report '<a href="failfile.tab" target="_blank" download="failfile.tab"><input type="button" align="center" value="Download a table of failed ids"></a>';}
-		  print $report '<br><br><a href="libraryfile.tab" target="_blank" download="libraryfile.tab"><input type="button" align="center" value="Download the filtered library table"></a><br><br><a href="library.fasta" target="_blank" download="library.fasta"><input type="button" align="center" value="Download the ready for ordering fasta file"></a></td></tr>';
-		  print $report '<tr><td colspan="2" rowspan="1" style="vertical-align: top;"><embed style="width: 100%; height: 10px;" alt="there should appear a  line" src="/cld/gradientline.svg" type="image/svg+xml"><br></td></tr>';
-		close $report;
-		chmod 0755, $temp_dir . "/index.html";
-      }
       #################################################################################################################################################################################
       #start the main loop which is looping through the sequence found in the SeqIO object, may be one or many more
       #################################################################################################################################################################################
@@ -3304,9 +3270,14 @@ sub make_a_crispr_library{
                                                                 }
                                                             }
                                                             
-                                                            if ( $cond==1 ) {
+                                                            if ( $cond==1 ) {                                                                
                                                                   my $startcoordinate=0;
-                                                                  if ($something{"offtargetdb"} eq "genomeDNA") {
+                                                                  
+                                                                  if ($direction eq "fw"){
+                                                                    $startcoordinate=$something{"unspecific_leading_bases"};
+                                                                  }                                                                 
+
+                                                                if ($something{"offtargetdb"} eq "genomeDNA") {
                                                                         my $namestuff="";
                                                                         if ( !exists $trees{$line[2]} ) { #TODO if und else fast identisch, aber relativ kurzer Part und daher Funktion performancetechnisch nachteilig
                                                                               $trees{$line[2]} = build_tree( $something{"databasepath"}  . $something{"ref_organism"} . "/" . $line[2] . "_indexed" );
@@ -3315,18 +3286,39 @@ sub make_a_crispr_library{
                                                                         foreach  my $anno ( @{$annotations} ) {
                                                                               if ( $anno =~ m/gene_(\S+?)_([0-9]+)_([0-9]+)/ ) {
                                                                                     $namestuff=$1;
-                                                                                    #$startcoordinate=$2;
                                                                               }
                                                                         }
                                                                     if ($namestuff eq "" && $something{"ignore_intergenic"} ==1) {                                                                              
-                                                                        }elsif($namestuff ne ""){
-                                                                              ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$namestuff."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
-                                                                        }elsif($namestuff eq "" && $something{"ignore_intergenic"} eq 0){
-                                                                              ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$line[2]."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
-                                                                        }
-                                                                  }else{
-                                                                        ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=";;".$line[2]."§§".($line[3])."§§".($line[3]+@matchstringo)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction;
-                                                                  }
+                                                                    }elsif($namestuff ne ""){
+                                                                              ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=
+                                                                                ";;".
+                                                                                    $namestuff.
+                                                                                    "§§".($line[3]-$startcoordinate).
+                                                                                    "§§".($line[3]+@matchstringo-$startcoordinate).
+                                                                                    "§§".join("",@matchstringo).
+                                                                                    "§§".$edit_distance.
+                                                                                    "§§".$direction.
+                                                                                    "§§".$line[2];
+                                                                    }elsif($namestuff eq "" && $something{"ignore_intergenic"} eq 0){
+                                                                              ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=
+                                                                                ";;".$line[2].
+                                                                                    "§§".($line[3]-$startcoordinate).
+                                                                                    "§§".($line[3]+@matchstringo-$startcoordinate).
+                                                                                    "§§".join("",@matchstringo).
+                                                                                    "§§".$edit_distance.
+                                                                                    "§§".$direction.
+                                                                                    "§§".$line[2];
+                                                                    }
+                                                                }else{
+                                                                        ${ ${ $CRISPR_hash{$seq} } {$id} }{"hits"}.=
+                                                                                ";;".$line[2].
+                                                                                    "§§".($line[3]).
+                                                                                    "§§".($line[3]+@matchstringo).
+                                                                                    "§§".join("",@matchstringo).
+                                                                                    "§§".$edit_distance.
+                                                                                    "§§".$direction.
+                                                                                    "§§".$line[2];
+                                                                }
                                                             }
                                                       }    
                                                 }
@@ -3426,7 +3418,6 @@ sub make_a_crispr_library{
                                                                               }
                                                                               my $annotations = $trees{$line[2]}->fetch( int($line[3]), int(($line[3])) );
                                                                               foreach  my $anno ( @{$annotations} ) {
-                                                                                print $anno;
                                                                                     if ( $anno =~ m/gene_(\S+)_([0-9]+)_([0-9]+)/ ) {
                                                                                           $namestuff=$1;
                                                                                           #$startcoordinate=$2;
@@ -3434,9 +3425,26 @@ sub make_a_crispr_library{
                                                                               }
 																			  if ($namestuff eq "" && $something{"ignore_intergenic"}==1) {                                                                              
 																				}elsif($namestuff ne ""){
-																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=";;".$namestuff."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction."§§".$spacer;
+																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=
+                                                                                      ";;".
+                                                                                        $namestuff.
+                                                                                        "§§".($line[3]-$startcoordinate).
+                                                                                        "§§".($line[3]+@matchstringo-$startcoordinate).
+                                                                                        "§§".join("",@matchstringo).
+                                                                                        "§§".$edit_distance.
+                                                                                        "§§".$direction.
+                                                                                        "§§".$spacer.
+                                                                                        "§§".$line[2];
 																				}elsif($namestuff eq "" && $something{"ignore_intergenic"}==0){
-																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=";;".$line[2]."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction."§§".$spacer;
+																					  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=
+                                                                                      ";;".$line[2].
+                                                                                        "§§".($line[3]-$startcoordinate).
+                                                                                        "§§".($line[3]+@matchstringo-$startcoordinate).
+                                                                                        "§§".join("",@matchstringo).
+                                                                                        "§§".$edit_distance.
+                                                                                        "§§".$direction.
+                                                                                        "§§".$spacer.
+                                                                                        "§§".$line[2];
 																				}
                                                                               $was_hit=1;
                                                                         }
@@ -3472,7 +3480,16 @@ sub make_a_crispr_library{
                                                                   $hitarray[-1]=join("§§",@lasthitarray);
                                                                   ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}=join(";;",@hitarray);
                                                             }else{
-                                                                  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=";;".$line[2]."§§".($line[3]-$startcoordinate)."§§".($line[3]+@matchstringo-$startcoordinate)."§§".join("",@matchstringo)."§§".$edit_distance."§§".$direction."§§".$spacer;
+                                                                  ${ ${ $CRISPR_hash{$seq} } {$line[0]} }{"hits"}.=
+                                                                    ";;".
+                                                                        $line[2].
+                                                                        "§§".($line[3]-$startcoordinate).
+                                                                        "§§".($line[3]+@matchstringo-$startcoordinate).
+                                                                        "§§".join("",@matchstringo).
+                                                                        "§§".$edit_distance.
+                                                                        "§§".$direction.
+                                                                        "§§".$spacer.
+                                                                        "§§".$line[2];
                                                             }
                                                             $was_hit=1;
                                                       }
@@ -3638,10 +3655,10 @@ sub make_a_crispr_library{
                               
                               open (my $outfiletab, ">", $temp_dir . "/" . $fname . "_" . "table.tab");
                                     if ($something{"kind"} eq "single") {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tCustom-Score\tDoench-Score\tXu-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\n";
+                                          print $outfiletab "Name\tLength\tChromosome\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tCustom-Score\tDoench-Score\tXu-Score\tpercent of total transcripts hit\tMatch-Target\tMatch-Chromosome\tMatch-Start\tMatch-End\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tStart_rti\tEnd_rti\n";
                                     }
                                     else {
-                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tCustom-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\n";
+                                          print $outfiletab "Name\tLength\tStart\tEnd\tStrand\tNucleotide sequence\tGene Name\tTranscripts\tTranscript:: Exon\tNumber of Cpg Islands hit\tSequence around the cutside\t%A %C %T %G\tS-Score\tA-Score\tCustom-Score\tpercent of total transcripts hit\tTarget\tMatch-start\tMatch-end\tMatchstring\tEditdistance\tNumber of Hits\tDirection\tSpacer\tStart_rti\tEnd_rti\n";
                                     }
 									if ($something{"purpose"} eq "non-coding") {
 											PRINTLOOP: foreach my $key (
@@ -3737,13 +3754,21 @@ sub make_a_crispr_library{
 														  
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"}, "\t", join("\t",@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}});
 														  print $outfiletab "\t$percent_of_transcripts_hit\t";
-														  print $outfiletab $splithit[0]."\t".$splithit[1]."\t".$splithit[2]."\t".$splithit[3]."\t".$splithit[4]."\t";
+														  print $outfiletab $splithit[0]."\t".$splithit[-1]."\t".$splithit[1]."\t".$splithit[2]."\t".$splithit[3]."\t".$splithit[4]."\t";
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"number_of_hits"}, "\t";
 														  print $outfiletab $splithit[5]."\t";
 														  if (!($something{"kind"} eq "single")) {
 																print $outfiletab $splithit[6]."\t";
 														  }
-														  
+														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}."\t";
+														  }
+														  #print its end on this whole sequence these are  genomic coordinates
+														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}."\t";
+														  }
 														  
 														  #print the end of the line as a new line
 														  print $outfiletab "\n";
@@ -3810,6 +3835,9 @@ sub make_a_crispr_library{
 														  }
 														  #print its start on this whole sequence these are  genomic coordinates
 														  my @locus=split("::",$statistics{$fname}{"seq_location"});
+                                                          if ( exists $statistics{$fname}{"seq_location"}) {
+																print $outfiletab $locus[0] . "\t";
+														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
 																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
                                                                 print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1] . "\t";
@@ -3884,15 +3912,22 @@ sub make_a_crispr_library{
 														  ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"} = join( " ", my @basecomp = find_base_count( $whole_crisp_seq ) ); #store the nucleotide composition as a string object in the hash
 														  
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"}, "\t", join("\t",@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}});
-														  print $outfiletab "\t$percent_of_transcripts_hit\t";
-														  print $outfiletab $splithit[0]."\t".$splithit[1]."\t".$splithit[2]."\t".$splithit[3]."\t".$splithit[4]."\t";
+														  print $outfiletab "\t$percent_of_transcripts_hit\t";                                                          
+														  print $outfiletab $splithit[0]."\t".$splithit[-1]."\t".$splithit[1]."\t".$splithit[2]."\t".$splithit[3]."\t".$splithit[4]."\t";
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"number_of_hits"}, "\t";
 														  print $outfiletab $splithit[5]."\t";
 														  if (!($something{"kind"} eq "single")) {
 																print $outfiletab $splithit[6]."\t";
 														  }
-														  
-														  
+                                                          if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}."\t";
+														  }
+														  #print its end on this whole sequence these are  genomic coordinates
+														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"} ) {
+																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
+                                                                print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}."\t";
+														  }
 														  #print the end of the line as a new line
 														  print $outfiletab "\n";
 														  #make a featureanntotaion for that CRISPR
@@ -4005,103 +4040,10 @@ sub make_a_crispr_library{
                               $member = $zip->addFile( $temp_dir . "/" . $fname . "_" . "table.tab", $fname . "_CRISPR.tab" );
                               $zip->writeToFileNamed( $temp_dir . '/' . $fname . '.zip' );
                               
-                              #####################################################################################################################################################################
-                              # Print the report site with the results (header was created earlier in the loop)
-                              #####################################################################################################################################################################
-                            if ($something{"draw_html_report"} ==1 ){
-                              open( my $report, ">>", "$temp_dir/index.html" ) or die "can not open report file";
-                                    #print the statistics
-                                    print $report '   <tr><td>
-                                                            <span class="main3"><B>Query name: '.$statistics{$fname}{"seq_name"}.'   Query length: '.$statistics{$fname}{"seq_length"}.'   Query location: '.$statistics{$fname}{"seq_location"}.'</B><br><br>';
-                                    foreach my $statistic(sort {$b cmp $a} keys(%{$statistics{$fname}})){
-                                          if ($statistic =~ m/Number/ig) {
-                                                print $report $statistic.' = '.$statistics{$fname}{$statistic}.'<br>';
-                                          }
-                                    }
-                                    print $report '         </span><br><br>
-                                                      </td></tr>';
-                                    #print the table
-                                    print $report '   <tr><td>
-                                                            <table class="talenHits" style="text-align: center; width: 800px; table-layout: fixed; border-bottom: 2px solid black;border-top: 1px solid black; padding: 2px; background-color: white;">';
-                                    open (my $tabfile, "<", $temp_dir . "/" . $fname . "_" . "table.tab");
-                                         my $count = 0;
-                                                while (my $line = <$tabfile>){
-                                                      chomp $line;
-                                                      my @line=split("\t",$line);
-                                                      print $report '<tr class="entry" id="'.$line[0].'">';
-                                                      foreach my $element (0,5,12,18,21,23){
-                                                            if ($count == 0){
-                                                                  if ($element==12) {
-                                                                       print $report '<th style="text-align: center; border-bottom: 1px solid black; color: white; padding: 2px; background-color: #2662C3;"> SAE-Score </th>';
-                                                                  }else{
-                                                                        print $report '<th style="text-align: center; border-bottom: 1px solid black; color: white; padding: 2px; background-color: #2662C3;"> '.$line[$element].' </th>';
-                                                                  }
-                                                            }else{
-                                                                  my $hittype = "bad";
-                                                                  if ($line[23] == 1) {
-                                                                        $hittype = "good";
-                                                                  }
-                                                                  if ($element == 21) {
-                                                                        #create popup for the matchstring-info if the option is chosen, otherwise only the matchstring itself
-                                                                        if ($something{"match_info"} ==1) {
-                                                                              my $popup = "";
-                                                                              if ($something{"kind"} eq "single") {
-                                                                                    $popup = create_popup(\@line, $databasepath, $something{"unspecific_leading_bases"}, 10);
-                                                                              }else {
-                                                                                    $popup = create_popupD(\@line, $databasepath, $something{"unspecific_leading_bases"}, 5);
-                                                                              }
-                                                                              $line[0] =~ s/\W/_/ig; #for html
-                                                                              $line[14] =~ s/\W/_/ig; #for html
-                                                                              print $report '<td class="'.$hittype.' main-button" style="text-align: center; word-wrap: break-word; font-family: arial, monospace; color: black; font-size:12px; background-color: white;">'
-                                                                                                .'<div id="dialog_'.$line[0].'__'.$line[18].'__'.$line[21].'" class="dialog" title="Matchstring Info for '.$line[0].' on Target '.$line[14].'">'.$popup.'</div>';
-                                                                              print $report     '<button id="'.$line[0].'__'.$line[18].'__'.$line[21].'" class="opener">Matchstring Info</button>'
-                                                                                          .'</td>';
-                                                                        }else {
-                                                                              print $report '   <td class="'.$hittype.' main" style="text-align: center; word-wrap: break-word; font-family: arial, monospace; color: black; font-size:12px; background-color: white;">'
-                                                                                                      . print_offtarget_string($line[$element]) .
-                                                                                                '</td>';
-                                                                        }
-                                                                  }elsif( $element == 12 ){
-                                                                        print $report '<td class="'.$hittype.'" >';
-                                                                        print $report hor_bar_chart($line[12],$line[13],$line[14]);
-                                                                        print $report '</td>';
-                                                                  }else{
-                                                                        print $report '   <td class="'.$hittype.' main" style="text-align: center; word-wrap: break-word; font-family: arial, monospace; color: black; font-size:12px; background-color: white;"> '
-                                                                                                .$line[$element].
-                                                                                          '</td>';
-                                                                  }
-                                                            }
-                                                      }
-                                                      $count++;
-                                                      print $report '</tr>';
-                                                }                                          
-                                    close $tabfile;
-                                    print $report '         </table>
-                                                      </td></tr>
-                                                      <tr><td>
-                                                            <br><br>
-                                                      </td></tr>';
-                                    #print the Image, the ZIP-Download and the bottom-line
-                                    print $report '   <table colspan="2" rowspan="2" style="vertical-align: top;border: 1px dashed black;">
-                                                            <tr><td><br><br>';
-                                    print $report '               <br><br>
-                                                            </td></tr>
-                                                            <tr><td>
-                                                                  <a href="' . $fname . '.zip' . '" target="_blank" download="'.$fname.'_CRISPRS.zip" class="main"><input type="button" value="Download  results as zipped folder"></a><br><br><br>
-                                                            </td></tr>
-                                                      </table>';
-                                    print $report '   <tr><td>
-                                                            <br><br>
-                                                      </td></tr>
-                                                      <tr><td colspan="2" rowspan="1" style="vertical-align: top;">
-                                                            <embed style="width: 100%; height: 10px;" alt="there should appear a  line" src="/cld/gradientline.svg" type="image/svg+xml"><br>
-                                                      </td></tr>
-                                                      <tr><td>
-                                                            <br><br>
-                                                      </td></tr>';
-                              close $report;                              
-                              $CRISPR_cnt{$fname}++;
-                        }
+                    #####################################################################################################################################################################
+                    # Print the report site with the results (header was created earlier in the loop)
+                    #####################################################################################################################################################################
+                    $CRISPR_cnt{$fname}++;
                   print "$fname is completed 100%\n";
                   if (defined $something{"GUI"}) {$mw->update;};
                   } #end Sequence loop
@@ -4128,17 +4070,6 @@ sub make_a_crispr_library{
 						print $key.' = '.$all_stats{$key}."\n";
 				  }
 				  
-				  
-                  if ($something{"draw_html_report"} ==1 ){
-                	  open( my $report, ">>", "$temp_dir/index.html" ) or die "can not open report file";
-                        	
-									print $report ' </tr>
-													</table>
-													</div>
-													</body>
-													</html>';
-					close $report;
-                  }
                   opendir(TEMPDIR,$temp_dir);
                         open (my $outfile, ">", $temp_dir."/all_results_together.tab");
                               open (my $outgff, ">", $temp_dir."/all_results_together.gff");
@@ -4171,7 +4102,7 @@ sub make_a_crispr_library{
                                                 }
                                           close $file;
                                           unlink $temp_dir."/".$filename;
-                                    }elsif($filename=~m/\.zip/){
+                                   }elsif($filename=~m/\.zip/){
                                           unlink $temp_dir."/".$filename;
                                     }
                               }

@@ -11,3 +11,9 @@
 | |+   enabled automated deletion of single gene files in the server appliation so only the usmmary is kept|
 | |+   fixed all binary builds |
 |v1.3.1|+   fixed error in version 1.3.0 where gene names with underscores caused major trouble |
+|v1.4.0|+   removed html output option |
+| |+   fixed alignment match coordinates to be according to unspecific leading base pairs |
+| |+   added the columns, Chromosome, Match-Chromosome, Start_rti, End_rti (relative to input) |
+| |+   fixed Manual and Readme for the new cloumn headings |
+| |+   fixed sgRNA ranking accordingly |
+
