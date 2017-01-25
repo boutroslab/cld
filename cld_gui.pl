@@ -66,7 +66,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.0','2017-01-19','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.1','2017-01-25','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -3662,8 +3662,8 @@ sub make_a_crispr_library{
                                     }
 									if ($something{"purpose"} eq "non-coding") {
 											PRINTLOOP: foreach my $key (
-																		sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} cmp $CRISPR_hash{$fname}{$a}->{"spec_score"} } keys(%{$CRISPR_hash{$fname}})
-																		) {
+																	sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} }																	
+																 keys(%{$CRISPR_hash{$fname}}) ) {
 											  $statistics{$fname}{"Number of successful designs"}++;
 											  my @targets=split(";;",${ ${ $CRISPR_hash{$fname} } {$key} }{"hits"} );
 											  #write the tab-delimited file
@@ -3672,12 +3672,15 @@ sub make_a_crispr_library{
 														  #print the candidates name
 														  print $outfiletab "$key\t";
 														  my @splithit = split("§§",$hit);
-														  #print its length on this whole sequence these are not genomic coordinates
+														  #print its length on this whole sequence these are genomic coordinates
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"length"} ) {
 																print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"length"} . "\t";
 														  }
-														  #print its start on this whole sequence these are not genomic coordinates
-														   my @locus=split("::",$statistics{$fname}{"seq_location"});
+														  #print its start on this whole sequence these are  genomic coordinates
+														  my @locus=split("::",$statistics{$fname}{"seq_location"});
+                                                          if ( exists $statistics{$fname}{"seq_location"}) {
+																print $outfiletab $locus[0] . "\t";
+														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
 																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
                                                                 print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}+$locus[1] . "\t";
@@ -3692,20 +3695,19 @@ sub make_a_crispr_library{
 														  }
 														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"} ) {
 																if ($something{"kind"} eq "single") {
-                                                                    if($something{"PAM_location"} eq "3_prime"){
-                                                                        if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
-																			print $outfiletab reverse_comp(substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length($something{"PAM"}))) . "\t";
+																	  if($something{"PAM_location"} eq "3_prime"){
+                                                                            if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
+                                                                                print $outfiletab reverse_comp(substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length($something{"PAM"}))) . "\t";
+                                                                            }else{
+                                                                                  print $outfiletab substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"})) . "\t";
+                                                                            }
                                                                         }else{
-                                                                              print $outfiletab substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"})) . "\t";
+                                                                            if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
+                                                                                print $outfiletab reverse_comp(substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))) . "\t";
+                                                                            }else{
+                                                                                print $outfiletab substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length($something{"PAM"})) . "\t";
+                                                                            }
                                                                         }
-                                                                    }else{
-                                                                        if (${ ${ $CRISPR_hash{$fname} } {$key} }{"strand"} eq "minus") {
-																			print $outfiletab reverse_comp(substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"})-length($something{"PAM"}))) . "\t";
-                                                                        }else{
-                                                                            print $outfiletab substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},0,length($something{"PAM"}))." ".substr(${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"},length($something{"PAM"})) . "\t";
-                                                                        }
-                                                                    }
-																	  
 																}else{
 																	  print $outfiletab reverse_comp(
 																									 substr(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"}}[0],0,2)."N ".substr(@{${ ${ $CRISPR_hash{$fname} } {$key} }{"nucseq"}}[0],3))
@@ -3715,7 +3717,7 @@ sub make_a_crispr_library{
 														  }
 														  #print the gene name it overlaped with if there was any
 														  if ( exists ${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"gene"} ) {
-																print $outfiletab join( "_", sort keys( %{ ${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"gene"} } ) ) . "\t";
+																print $outfiletab join( "_", keys( %{ ${ ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"} }{"gene"} } ) ) . "\t";
 														  } else {
 																print $outfiletab "NA\t";
 														  }
@@ -3753,14 +3755,14 @@ sub make_a_crispr_library{
 														  ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"} = join( " ", my @basecomp = find_base_count( $whole_crisp_seq ) ); #store the nucleotide composition as a string object in the hash
 														  
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"}, "\t", join("\t",@{${ ${ $CRISPR_hash{$fname} } {$key} }{"score"}});
-														  print $outfiletab "\t$percent_of_transcripts_hit\t";
+														  print $outfiletab "\t$percent_of_transcripts_hit\t";                                                          
 														  print $outfiletab $splithit[0]."\t".$splithit[-1]."\t".$splithit[1]."\t".$splithit[2]."\t".$splithit[3]."\t".$splithit[4]."\t";
 														  print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"number_of_hits"}, "\t";
 														  print $outfiletab $splithit[5]."\t";
 														  if (!($something{"kind"} eq "single")) {
 																print $outfiletab $splithit[6]."\t";
 														  }
-														  if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
+                                                          if ( exists ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"} ) {
 																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}-500+$locus[1] . "\t";
                                                                 print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"start"}."\t";
 														  }
@@ -3769,7 +3771,6 @@ sub make_a_crispr_library{
 																#print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}-500+$locus[1] . "\t";
                                                                 print $outfiletab ${ ${ $CRISPR_hash{$fname} } {$key} }{"end"}."\t";
 														  }
-														  
 														  #print the end of the line as a new line
 														  print $outfiletab "\n";
 														  #make a featureanntotaion for that CRISPR
@@ -3814,7 +3815,7 @@ sub make_a_crispr_library{
 											  }
 											  undef ${ ${ $CRISPR_hash{$fname} } {$key} } {"context"}; #delete the "context" hash of the crispr hash it is not longer needed
 											  ${ ${ $CRISPR_hash{$fname} } {$key} }{"Nuc_comp"} = join( " ", my @basecomp = find_base_count( $whole_crisp_seq ) ); #store the nucleotide composition as a string object in the hash
-										}
+										} #end of printloop
 									}else{									
 										PRINTLOOP: foreach my $key (
 																	sort { $CRISPR_hash{$fname}{$b}->{"spec_score"} <=> $CRISPR_hash{$fname}{$a}->{"spec_score"} }
