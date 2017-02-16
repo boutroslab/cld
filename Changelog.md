@@ -17,3 +17,5 @@
 | |+   fixed Manual and Readme for the new cloumn headings |
 | |+   fixed sgRNA ranking accordingly |
 |v1.4.1|+   fixed a problem when purpose was set to non-coding so that not all possible sgRNA were considered for the library fitering |
+|v1.4.3|+   Added TTTV as PAM |
+| |+   fixed output fasta file when PAM is 5' |

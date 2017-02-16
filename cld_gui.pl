@@ -66,7 +66,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.2','2017-01-25','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.3','2017-01-25','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -1331,7 +1331,7 @@ if ($something{"GUI"}) {
 					)																	;
 																				   ;
 					$scl_off_targets_allowed 	= $offtarget_options_frame -> Scale(-label=>"off-targets allowed [#]:",-orient=>'h',	-length=>150,	-digit=>1,	-from=>0,	-to=>100,	-variable=>\$something{"off-targets-allowed"}, -tickinterval=>33,	-resolution=>1	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
-					$scl_unspecific_leading_bases 	= $offtarget_options_frame -> Scale(-label=>"unspecific 5' bases [nt]:",-orient=>'h',	-length=>150,	-digit=>1,	-from=>0,	-to=>10,	-variable=>\$something{"unspecific_leading_bases"}, -tickinterval=>3,	-resolution=>1	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
+					$scl_unspecific_leading_bases 	= $offtarget_options_frame -> Scale(-label=>"unspecific PAM distal bases [nt]:",-orient=>'h',	-length=>150,	-digit=>1,	-from=>0,	-to=>10,	-variable=>\$something{"unspecific_leading_bases"}, -tickinterval=>3,	-resolution=>1	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
 					$scl_edit_distance_allowed 	= $offtarget_options_frame -> Scale(-label=>"mismatches allowed [nt]:",-orient=>'h',	-length=>150,	-digit=>1,	-from=>0,	-to=>5,	-variable=>\$something{"edit_distance_allowed"}, -tickinterval=>2,	-resolution=>1	);	#make slider with a minimum, a maximum,an orientation, a modifed variable, a certain bckground color, the intervals ticks should be drawn, the number by that the interval should be devided 1..100 will be devided by ten so that every tenth value can be selected
 					
 					$chk_ignore_intergenic = $offtarget_options_frame 		-> Checkbutton(
@@ -1668,7 +1668,8 @@ if ($something{"GUI"}) {
 																	defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 																	$something{"working_path"},
 																	$something{"gene_list_file_name"},
-																	defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
+																	defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0,
+                                                                    %something
 																	);
                                                         }
                                                     });
@@ -1767,7 +1768,8 @@ if ($something{"GUI"}) {
 					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 					$something{"working_path"},
 					$something{"gene_list_file_name"},
-					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
+					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0,
+                    %something
 				);
 		}elsif($something{"task"} eq "library_assembly"){
 			if(!defined($something{"gene_list_file_name"})){
@@ -1794,7 +1796,8 @@ if ($something{"GUI"}) {
 					defined($something{"correct_5_prime_G"}) ? $something{"correct_5_prime_G"} : 1, 
 					$something{"working_path"},
 					$something{"gene_list_file_name"},
-					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0
+					defined($something{"cover_many_transcripts"}) ? $something{"cover_many_transcripts"} : 0,
+                    %something
 				   );
 		}else{
 			die "Some parameters are missing!\nOne of the four options make_database , target_ident , end_to_end or library assembly must be set.\n";
@@ -2326,7 +2329,8 @@ sub filter_library{
     my $correct_five_prime=$_[6];
 	my $output_dir=$_[7];
 	my $gene_list_file=$_[8];
-	my $many_transcripts=$_[9];	
+	my $many_transcripts=$_[9];
+    my %parameters=$_[10];
     my @info=();
 	my @ids;
     my @line=();
@@ -2487,24 +2491,33 @@ sub filter_library{
 					$all_ids{$line[0]}++;
 					if (!exists($fasta{$line[0]})) {
 						print $libtab_out $_;
-						if ($correct_five_prime ==1) {
-							if ($line[6]=~m/\w(\w+)\s[NACGT]+_\w(\w+)\s[NACGT]+/) {
-								print $libfa_out ">".$line[0]."_left\n".$five_prime_extension."G".$1."$three_prime_extension\n";
-								print $libfa_out ">".$line[0]."_right\n".$five_prime_extension."G".$2."$three_prime_extension\n";
-							}else{
-								$line[6]=~m/\w(\w+)\s\w+/;
-								print $libfa_out ">".$line[0]."\n".$five_prime_extension."G".$1."$three_prime_extension\n";
-							}
-						}else{
-							if ($line[6]=~m/(\w+)\s[NACGT]+_(\w+)\s[NACGT]+/) {
-								print $libfa_out ">".$line[0]."_left\n".$five_prime_extension.$1."$three_prime_extension\n";
-								print $libfa_out ">".$line[0]."_right\n".$five_prime_extension.$2."$three_prime_extension\n";
-							}else{
-								$line[6]=~m/(\w+)\s\w+/;
-								print $libfa_out ">".$line[0]."\n"."$five_prime_extension".$1."$three_prime_extension\n";
-							}
-						
-						}
+                        if($parameters{"PAM_location"} eq "3_prime"){ 
+                            if ($correct_five_prime ==1) {
+                                if ($line[6]=~m/\w(\w+)\s[NACGT]+_\w(\w+)\s[NACGT]+/) {
+                                    print $libfa_out ">".$line[0]."_left\n".$five_prime_extension."G".$1."$three_prime_extension\n";
+                                    print $libfa_out ">".$line[0]."_right\n".$five_prime_extension."G".$2."$three_prime_extension\n";
+                                }else{
+                                    $line[6]=~m/\w(\w+)\s\w+/;
+                                    print $libfa_out ">".$line[0]."\n".$five_prime_extension."G".$1."$three_prime_extension\n";
+                                }
+                            }else{
+                                if ($line[6]=~m/(\w+)\s[NACGT]+_(\w+)\s[NACGT]+/) {
+                                    print $libfa_out ">".$line[0]."_left\n".$five_prime_extension.$1."$three_prime_extension\n";
+                                    print $libfa_out ">".$line[0]."_right\n".$five_prime_extension.$2."$three_prime_extension\n";
+                                }else{
+                                    $line[6]=~m/(\w+)\s\w+/;
+                                    print $libfa_out ">".$line[0]."\n"."$five_prime_extension".$1."$three_prime_extension\n";
+                                }
+                            }
+                        }else{
+                                if ($line[6]=~m/[NACGT]+\s(\w+)_[NACGT]+\s(\w+)/) {
+                                    print $libfa_out ">".$line[0]."_left\n".$five_prime_extension.$1."$three_prime_extension\n";
+                                    print $libfa_out ">".$line[0]."_right\n".$five_prime_extension.$2."$three_prime_extension\n";
+                                }else{
+                                    $line[6]=~m/\w+\s(\w+)/;
+                                    print $libfa_out ">".$line[0]."\n"."$five_prime_extension".$1."$three_prime_extension\n";
+                                }                            
+                        }
 						
 						$fasta{$line[0]}++;
 					}
