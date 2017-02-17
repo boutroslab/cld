@@ -19,3 +19,6 @@
 |v1.4.1|+   fixed a problem when purpose was set to non-coding so that not all possible sgRNA were considered for the library fitering |
 |v1.4.3|+   Added TTTV as PAM |
 | |+   fixed output fasta file when PAM is 5' |
+|v1.4.4|+   fixed 5_prime PAM matchstring |
+| |+   fixed 5_prime PAM off-target behaviour |
+| |+   changed off-targets-allowed parameter to targets-allowed the number has to be greater than 1. Else all sgRNAs are excluded also those that only have one \"on-target\" |

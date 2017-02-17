@@ -136,7 +136,7 @@ In the following table every parameters as can be defined in the parameter-file 
 | retrieve_recomb_matrix | defines if the sequences for homology arms should be computed and reported | boolean (1 or 0) |
 | bowtie_version | defines which version of bowtie or blast should be used for off-target analysis. Bowtie is more sensitive to mismatches of single designs, and bowtie2 is optimized for paired alignments of sequences. Here Blast tends to be the most sensitive towards less homologous sequences. For all mapping algorithms only full-length alignments are counted. | bowtie, bowtie2 or blast |
 | offtargetdb | defines if off-targets should be searched in genomic sequences, sequences of annotated genes or exons of protein coding sequences | genomeDNA, gDNA or cDNA |
-| off-targets-allowed | defines how many off-targets per design are tolerated before it is excluded from the report | numeric |
+| targets-allowed | defines how many targets per design are tolerated before it is excluded from the report. This should be grater or equal than 1. Else the target is excluded as well and there are no designs passing.| numeric |
 | unspecific_leading_bases | defines the number of 5' base pairs of the target site to be ignored for the off-target mapping | numeric |
 | edit_distance_allowed | defines the edit distance (sum of all mismatch or INDEL positions) allowed during alignment to be still counted as off-target | numeric |
 | bowtie_mode | define the bowtie mode as referenced in the bowtie2 manual | sensitive, very sensitive, fast, very-fast |
