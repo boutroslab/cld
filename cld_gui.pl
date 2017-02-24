@@ -66,7 +66,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.4','2017-02-17','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.5','2017-02-17','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -2579,16 +2579,16 @@ sub filter_library{
         foreach my $key (keys %isgone) {
 			if (looks_like_number($isgone{$key})) {
                 print $mis 	$key." is missing from the library. It was covered by ".
-							$isgone{$key}." designs. Maybe it was covered two low or not found in the cld database.\n";
+							$isgone{$key}." designs. Maybe it was covered to low or not found in the cld database.\n";
 				print $key." is missing from the library. It was covered by ".
-							$isgone{$key}." designs. Maybe it was covered two low or not found in the cld database.\n";
+							$isgone{$key}." designs. Maybe it was covered to low or not found in the cld database.\n";
             }else{
 				print $mis 	$key," ",$isgone{$key};
 				print $key," ",$isgone{$key};
 			}
 		}
-		print $mis (scalar keys %genes_from_list) - (scalar keys %id_for_lib )." genes are missing because of two harsh design criteria\n";
-		print " ",((scalar keys %genes_from_list) - (scalar keys %id_for_lib ))," genes are missing because of two harsh design criteria\n";
+		print $mis (scalar keys %genes_from_list) - (scalar keys %id_for_lib ) + (scalar keys %isgone)." genes are missing because of to harsh design criteria or because they were not found by CLD in the data base.\n";
+		print " ",((scalar keys %genes_from_list) - (scalar keys %id_for_lib ) + (scalar keys %isgone))," genes are missing because of to harsh design criteria or because they were not found by CLD in the data base.\n";
     close $mis;
 	open (my $parameters, ">", $output_dir.$lib_name.".parameters.tab") or die $!;
 		foreach my $key (sort keys %something){
@@ -2997,6 +2997,14 @@ sub make_a_crispr_library{
                   }
 				close $infile;
 			}
+            my %seen;
+            @id = sort @id;
+            foreach my $string (@ids) {            
+                next unless $seen{$string}++;
+                 print $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;
+                 if (defined $something{"GUI"}) {$mw->update;};
+                die $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;
+            }            
             make_temp_fasta_file(\@ids, \%trees, \%something, $db, $temp_dir, 1);
             $seqio_obj = Bio::SeqIO->new( -file => $temp_dir . "/tempfile.fasta", -format => "fasta" ); #read the temporary fasta file            
       } elsif($something{"data_type"} eq "fasta") { 
@@ -3005,10 +3013,15 @@ sub make_a_crispr_library{
             #################################################################################################################################################################################
             my $count=0;
             my $temp="";
+            my %seen;
             open(my $infile, "<",$something{"input_file"});
                         while (my $line = <$infile>){
                               if ($line=~m/^(>.+)/) {
                                     $count++;
+                                    next unless $seen{$1}++;
+                                     print $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;
+                                     if (defined $something{"GUI"}) {$mw->update;};
+                                    die $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;                  
                               }elsif ($line=~m/([^ACGTUN\s]+)/){
                                     die $something{"input_file"}." is not a FASTA format file because it contains \"$1\" as bases\n" ;
                               }
@@ -3037,6 +3050,14 @@ sub make_a_crispr_library{
                   }
 				close $infile;
 			}
+            my %seen;
+            @id = sort @id;
+            foreach my $string (@id) {            
+                next unless $seen{$string}++;
+                print $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;
+                if (defined $something{"GUI"}) {$mw->update;};
+                die $string." is a duplicated ID.\n Please ensure that all Sequence/Gene/Coordiante IDs are unique.\n" ;
+            }
             make_temp_fasta_file_from_coords(\@ids, \%trees, \%something, $db, $temp_dir, 1);
             $seqio_obj = Bio::SeqIO->new( -file => $temp_dir . "/tempfile.fasta", -format => "fasta" ); #read the temporary fasta file
 		}
@@ -4448,9 +4469,9 @@ sub find_and_print_CRISPRS {
             
             {
                   my $json = JSON::XS::encode_json(\%CRISPR_hash);
-                  write_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' }, $json );
+                  write_file( $temp_dir . "/" .$seq_obj->display_id .'_'. $cut . '.json', { binmode => ':raw' }, $json );
                   $json = JSON::XS::encode_json(\%tempstatistics);
-                  write_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' }, $json );
+                  write_file( $temp_dir . "/" . $seq_obj->display_id .'_'. $cut . 'stats.json', { binmode => ':raw' }, $json );
             }
             
             $pm->finish();
@@ -4462,15 +4483,15 @@ sub find_and_print_CRISPRS {
       
       $pm->wait_all_children();
       foreach  my $cut (@cuts) {
-            my $json = read_file( $temp_dir . "/" .$seq_obj->display_id . $cut . '.json', { binmode => ':raw' } );
+            my $json = read_file( $temp_dir . "/" .$seq_obj->display_id .'_'. $cut . '.json', { binmode => ':raw' } );
             %finished_CRISPR_hash = ( %finished_CRISPR_hash, %{ decode_json $json } );
-           unlink $temp_dir . "/" . $seq_obj->display_id . $cut . ".json";
-            $json = read_file( $temp_dir . "/" . $seq_obj->display_id . $cut . 'stats.json', { binmode => ':raw' } );
+           unlink $temp_dir . "/" . $seq_obj->display_id .'_'. $cut . ".json";
+            $json = read_file( $temp_dir . "/" . $seq_obj->display_id .'_'. $cut . 'stats.json', { binmode => ':raw' } );
             my %sechash=%{ decode_json $json };
             foreach  my $seckey (keys(%sechash)){
                         $tempstatistics{$seckey}+=$sechash{$seckey};
             }
-           unlink $temp_dir . "/" . $seq_obj->display_id . $cut . "stats.json";
+           unlink $temp_dir . "/" . $seq_obj->display_id .'_'. $cut . "stats.json";
       }
       return (\%finished_CRISPR_hash,\%tempstatistics);
 }
