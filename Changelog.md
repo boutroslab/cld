@@ -22,3 +22,6 @@
 |v1.4.4|+   fixed 5_prime PAM matchstring |
 | |+   fixed 5_prime PAM off-target behaviour |
 | |+   changed off-targets-allowed parameter to targets-allowed the number has to be greater than 1. Else all sgRNAs are excluded also those that only have one \"on-target\" |
+|v1.4.5|+   fixed error handling with doubled gene ids. Now a warning is thrown and genes are processed in alphanumerical order |
+| |+   fixed issues when Genes had similar names with numerics e.g. RPL3 and RPL30 |
+| |+   fixed counting of missing genes|
