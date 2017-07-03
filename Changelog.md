@@ -25,3 +25,4 @@
 |v1.4.5|+   fixed error handling with doubled gene ids. Now a warning is thrown and genes are processed in alphanumerical order |
 | |+   fixed issues when Genes had similar names with numerics e.g. RPL3 and RPL30 |
 | |+   fixed counting of missing genes|
+|v1.4.6|+   fixed an issue with library output in fasta format, where only the PAM was in the output oligo |

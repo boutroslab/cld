@@ -66,7 +66,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.5','2017-02-17','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.6','2017-02-17','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -2505,7 +2505,7 @@ sub filter_library{
 					$all_ids{$line[0]}++;
 					if (!exists($fasta{$line[0]})) {
 						print $libtab_out $_;
-                        if($parameters{"PAM_location"} eq "3_prime"){ 
+                        if($something{"PAM_location"} eq "3_prime"){ 
                             if ($correct_five_prime ==1) {
                                 if ($line[6]=~m/\w(\w+)\s[NACGT]+_\w(\w+)\s[NACGT]+/) {
                                     print $libfa_out ">".$line[0]."_left\n".$five_prime_extension."G".$1."$three_prime_extension\n";
@@ -2521,6 +2521,7 @@ sub filter_library{
                                 }else{
                                     $line[6]=~m/(\w+)\s\w+/;
                                     print $libfa_out ">".$line[0]."\n"."$five_prime_extension".$1."$three_prime_extension\n";
+                                    
                                 }
                             }
                         }else{
