@@ -1057,13 +1057,13 @@ if ($something{"GUI"}) {
                                                                     -message => 'The Base folder you selected '.$something{"databasepath"}. "\n does not exist!",
                                                                 );
                                                             }else{
-                                                                system("curl ".$something{"precalc"}." -o ".$something{"databasepath"}."/$file_name");
+                                                                system("wget ".$something{"precalc"}." -P ".$something{"databasepath"});
                                                                 if (!-e $something{"databasepath"}."/$file_name") {
                                                                      $make_database->messageBox(
                                                                          -icon => 'error',
                                                                          -type => 'ok',
                                                                          -title => 'Error',
-                                                                         -message => 'The file you selected '.$something{"databasepath"}."/$file_name". "\n failed to download. \n Please check your internet connection and/or proxy settings.",
+                                                                         -message => 'The file you selected '.$something{"databasepath"}."/$file_name". "\n failed to download. \n Please check your internet connection and/or proxy settings. Also check if wget is installed on your system.",
                                                                      );
                                                                  }else{
                                                                      system("tar -xzvf ".$something{"databasepath"}."/$file_name -C ".$something{"databasepath"});
@@ -3264,7 +3264,8 @@ sub make_a_crispr_library{
                                                 system($aligner_path."makeblastdb -in ".$databasepath.".dna.toplevel.fa -dbtype nucl -title ".$something{"ref_organism"}.".blast.genome -out ".$databasepath.".blast.genome -parse_seqids");
                                          }
                                         system( $aligner_path.'blastn -db '.$databasepath.'.blast.genome -query '. $temp_dir . "/" . 'temp_CRISPRS.fasta -task blastn-short -outfmt 15 -parse_deflines -num_threads '.$parallel_number.' | sed "s/lcl|//g" | grep "AS:i:'.$length.'"  > ' . $temp_dir .'/temp_out.bwt' );
-                                          
+                                        
+                                         
                                     }
                                 
                               }

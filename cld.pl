@@ -61,7 +61,7 @@ if(-d $ENV{PAR_TEMP}."/inc/"){
 }
 $| = 1;
 
-my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.4.6','2017-02-17','2013-2015');
+my ($script_name,$script_version,$script_date,$script_years) = ('cld','1.5','2017-02-17','2013-2015');
 
 
 ###################################################################################################################################################################################################
@@ -1051,7 +1051,7 @@ if ($something{"GUI"}) {
                                                                     -message => 'The Base folder you selected '.$something{"databasepath"}. "\n does not exist!",
                                                                 );
                                                             }else{
-                                                                system("curl ".$something{"precalc"}." -o ".$something{"databasepath"}."/$file_name");
+                                                                system("wget ".$something{"precalc"}." -o ".$something{"databasepath"});
                                                                 if (!-e $something{"databasepath"}."/$file_name") {
                                                                      $make_database->messageBox(
                                                                          -icon => 'error',
