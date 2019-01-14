@@ -33,14 +33,14 @@ Library design can either be done in two steps: “cld
 
 For running cld from the command line the following syntax must be used.
 
-cld  [--task options] [--organism] []
+cld  [--task] [options] 
 
 	--task=<task option>
 		 make_database 				to provide an cld ready data base.
 	
-		--organism=<string>					Specify an organism to build the database for.
+		    --organism=<string>				Specify an organism to build the database for.
 	
-		    --rsync-link=<rsync://path/to/dir>	         Specify an ftp repository to build the database from.
+		    --rsync-link=<rsync://path/to/dir>	        Specify an ftp repository to build the database from.
 								    
 								    rsync://ftp.ensembl.org/ensembl/pub/release-81/
 								    
@@ -55,42 +55,39 @@ cld  [--task options] [--organism] []
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
-		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file.
-			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated 
+		    --scoring-module=<path/to/dir>		- the path to a file defining a perl scoring function
 
 		 library_assembly 				to format a library from an identification folder.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
-		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file. 
-		    --cov=<int>						- Specify the minimum gene coverage as <int> default(15)
-		    --lib-size=<int>				- Specify the maximum library size as <int> default(2000)
-		    --lib-name=<string>				- Prefix for the final library as <string> default(test_lib).
-		    --5-prime=<string>				- Define the adapter to be put in 5' before the target site.
-												default(CTGAGCTCATAGAAGACCTCACC)
-		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
-								   				default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
+		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated 
+		    --cov=<int>					- minimum gene coverage as <int> default(15)
+		    --lib-size=<int>				- maximum library size as <int> default(2000)
+		    --lib-name=<string>				- Prefix as <string> default(test_lib).
+		    --5-prime=<string>				- adapter 5' of the target default(CTGAGCTCATAGAAGACCTCACC)
+		    --3-prime=<string>				- adapter 3' of the target 											default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
 		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G
-								   				 may be "true" or "false" default :true.	    
+		    						May be "true" or "false" default :true.	    
 		    --input-folder=<path/to/dir>		- Specify the input folder for library assembly.
-								    			this folder must be prepared by --task= target_ident
-			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
-													-an be : true or false (default:true)
+		    						This folder must be prepared by --task= target_ident
+		    --spread-over-transcripts=<string>		- should the designs be equally spread oer the different 								transcripts of the gene can be : true or false (default:true)
 
-		 end_to_end 							to perform and end-to-end analysis from target identification to library formatting
+		 end_to_end 					to perform and end-to-end analysis from target
+		 						identification to library formatting
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
 		    --parameter-file=<path/to/dir>		- a parameter file in cld format as path to file.
-		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated as path to file. 
-		    --cov=<int>						- Specify the minimum gene coverage as <int> default(15)
-		    --lib-size=<int>				- Specify the maximum library size as <int> default(2000)
-		    --lib-name=<string>				- Prefix for the final library as <string> default(test_lib).
+		    --gene-list=<path/to/dir>			- a gene list file with ENSEMBL IDs new-line seprated 
+		    --cov=<int>					- minimum gene coverage as <int> default(15)
+		    --lib-size=<int>				- maximum library size as <int> default(2000)
+		    --lib-name=<string>				- library prefix <string> default(test_lib).
 		    --5-prime=<string>				- Define the adapter to be put in 5' before the target site.
 								    			default(CTGAGCTCATAGAAGACCTCACC)
 		    --3-prime=<string>				- Define the adapter to be put in 3' behind the target site.
-								    			default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
-		    --cor-5-prime=<string>			- Specify if the first 5' baspair should be corrected to a G.
-			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different transcripts of the gene
-													-can be : true or false (default:true)
-			--scoring-module=<path/to/dir>		- the path and filename of a file defining a perl scoring function
+		    					default(GTTTTAGAGCTAGAAATAGCAAGTTAAAATAAGGCTAGTCCGTGGGTCTTCGTTCG)
+		    --cor-5-prime=<string>			- if the first 5' baspair should be corrected to a G.
+			--spread-over-transcripts=<string>	- should the designs be equally spread oer the different 								transcripts of the gene can be : true or false (default:true)
+			--scoring-module=<path/to/dir>		- the path of a file defining a perl scoring function
 
 	    --version							- Show version.
 	    --help								- Show this message.
