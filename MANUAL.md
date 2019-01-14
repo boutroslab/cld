@@ -15,7 +15,7 @@ Database creation is called using the “--task=make_database” command
  	automatically download the latest toplevel FASTA, GFF and GTF files for the organism 
  	of interest and compile a database containing bowtie indexes, mygff files and 
  	reformatted sequence files. If not enough computing power is available to the user, 
- 	these databases also might be downloaded from http://www.dkfz.de/signaling/crispr-downloads/. 
+ 	these databases also might be downloaded from http://www.dkfz.de/signaling/crispr-downloads/DATABASES. 
 
 Library design can either be done in two steps: “cld 
 	 --task=target_ident” and then “cld  --task=library_assembly” if the user wants 
@@ -50,11 +50,11 @@ Options:
 								    
 								    rsync://ftp.ensemblgenomes.org/all/pub/protists/current/
 
-									rsync://ftp.ensemblgenomes.org/all/pub/plants/current/
+								    rsync://ftp.ensemblgenomes.org/all/pub/plants/current/
 
-									rsync://ftp.ensemblgenomes.org/all/pub/fungi/current/
+								    rsync://ftp.ensemblgenomes.org/all/pub/fungi/current/
 									
-									rsync://ftp.ensemblgenomes.org/all/pub/metazoa/current/
+								    rsync://ftp.ensemblgenomes.org/all/pub/metazoa/current/
 
 		 target_ident 					to identify target sequences.
 		    --output-dir=<path/to/dir>			- a working directory as unix path to directory.
