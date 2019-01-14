@@ -33,19 +33,15 @@ Library design can either be done in two steps: “cld
 
 For running cld from the command line the following syntax must be used.
 
-Usage: cld  --task=end_to_end [options=value] ...
-Options:
-	    --task=<task option>
-		 make_database 				to provide an cld ready data base.
-		    --organism=<string>		Specify an organism to build the database for.
-								    it must be one of the organisms available in ENSEMBLs ftp repository.
-								    And in the same format as its ENSEMBL ftp directoy name.
-								    E.g.: drosophila_melanogaster or homo_sapiens
+cld  [--task options] [--organism] []
 
+	--task=<task option>
+		 make_database 				to provide an cld ready data base.
+	
+		--organism=<string>					Specify an organism to build the database for.
+	
 		    --rsync-link=<rsync://path/to/dir>	         Specify an ftp repository to build the database from.
-								    it must be one of the organisms available in ENSEMBLs ftp repository.
-								    And in the same format as its ENSEMBL rsync directoy path.
-								    E.g.: 
+								    
 								    rsync://ftp.ensembl.org/ensembl/pub/release-81/
 								    
 								    rsync://ftp.ensemblgenomes.org/all/pub/protists/current/
