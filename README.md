@@ -12,13 +12,21 @@ ABSTRACT
 
 Here we describe CRISPR library designer (CLD), an integrated bioinformatics application for the design of custom single guide RNA (sgRNA) libraries for all organisms with annotated genomes. CLD is suitable for the design of libraries using modified CRISPR enzymes and targeting non-coding regions. To demonstrate its utility, we perform a pooled screen for modulators of the TNF-related apoptosis inducing ligand (TRAIL) pathway using a custom library of 12,471 sgRNAs.
 
+**This version is deprecated:**
+
+Please sue the dockerized version of cld that can be found here:
+
+![ cld docker on github ]( https://github.com/boutroslab/cld_docker)
+
+The Mac version 1.4.2 will not work anymore on recent MacOS.
+
 **Quick-Start:**
 
-On Mac/Linux\:
+On Linux\:
  1. If you haven't, install Xquartz from http://www.xquartz.org/
    
    1.1 When logging in remotely: log into your remote server by ssh -X
- 2. Download CLD_GUI_Mac.zip or CLD_GUI_Ubuntu.zip according to your Operating system and unzip it.
+ 2. Download CLD_GUI_Ubuntu.zip according to your Operating system and unzip it.
  3. Double click on the application or open it by ./CLD in the Terminal.
  4. Download the database for your organism of interest.
  5. Enter its name in the reference organism field on the start page.
