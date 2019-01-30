@@ -4,6 +4,15 @@
 
 #CRISPR Library Designer (CLD): a software for the multispecies design of sgRNA libraries
 
+
+**This version is deprecated:**
+
+Please see the dockerized version of cld that can be found here:
+
+![ cld docker on github ]( https://github.com/boutroslab/cld_docker)
+
+The Mac version 1.4.2 will not work anymore on recent MacOS.
+
 CITATION
 
 [F. Heigwer\*, T. Zhan\*, M. Breinig, J. Winter, D. Brügemann, S. Leible, M. Boutros, CRISPR library designer (CLD): software for multispecies design of single guide RNA libraries, Genome Biol., 2016, DOI:10.1186/s13059-016-0915-2](http://genomebiology.biomedcentral.com/articles/10.1186/s13059-016-0915-2 "Access manuscript directly")
@@ -12,13 +21,6 @@ ABSTRACT
 
 Here we describe CRISPR library designer (CLD), an integrated bioinformatics application for the design of custom single guide RNA (sgRNA) libraries for all organisms with annotated genomes. CLD is suitable for the design of libraries using modified CRISPR enzymes and targeting non-coding regions. To demonstrate its utility, we perform a pooled screen for modulators of the TNF-related apoptosis inducing ligand (TRAIL) pathway using a custom library of 12,471 sgRNAs.
 
-**This version is deprecated:**
-
-Please sue the dockerized version of cld that can be found here:
-
-![ cld docker on github ]( https://github.com/boutroslab/cld_docker)
-
-The Mac version 1.4.2 will not work anymore on recent MacOS.
 
 **Quick-Start:**
 
