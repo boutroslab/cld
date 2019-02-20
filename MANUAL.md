@@ -37,7 +37,7 @@ Library design can either be done in two steps: “cld
 
 For running cld from the command line the following syntax must be used.
 
-cld  [--task] [options] 
+cld  [--task=option] 
 
 	--task=<task option>
 		 make_database 				to provide an cld ready data base.
