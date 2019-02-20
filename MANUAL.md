@@ -1,3 +1,7 @@
+USAGE
+
+docker run -v ~/Desktop:/data boutroslab/cld_docker cld [--option=value] [--option=value]
+
 cld can be called either with “--version”, printing its version number and copyrights, 
 “--help” printing a more elusive help documentation and with “--task”. 
 
