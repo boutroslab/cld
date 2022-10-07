@@ -55,7 +55,7 @@ Database creation is called using the “--task=make_database” command
  	automatically download the latest toplevel FASTA, GFF and GTF files for the organism 
  	of interest and compile a database containing bowtie indexes, mygff files and 
  	reformatted sequence files. If not enough computing power is available to the user, 
- 	these databases also might be downloaded from http://www.dkfz.de/signaling/crispr-downloads/. 
+ 	these databases also might be downloaded from http://www.e-crisp.org/E-CRISP/CLD-DB/. 
 
 Library design can either be done in two steps: “cld 
 	 --task=target_ident” and then “cld  --task=library_assembly” if the user wants 
